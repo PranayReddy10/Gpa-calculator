@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPA Calculator Admin</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--text:#1d1d1f;--muted:#6b7280;--line:#e5e7eb;--brand:#c8102e;--ok:#15803d}
+  *{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+  header{background:var(--brand);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px}
+  header h1{font-size:16px;margin:0;flex:1}
+  header button{background:rgba(255,255,255,.2);color:#fff;border:0;padding:6px 12px;border-radius:6px;cursor:pointer}
+  nav{display:flex;gap:4px;padding:10px 20px 0;border-bottom:1px solid var(--line);background:var(--card)}
+  nav a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--muted);text-decoration:none;cursor:pointer}
+  nav a.active{color:var(--brand);border-bottom:2px solid var(--brand);font-weight:600}
+  main{padding:20px;max-width:1100px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .tile b{display:block;font-size:22px;margin-top:2px}.tile span{color:var(--muted);font-size:12px}
+  h2{font-size:15px;margin:0 0 10px}h3{font-size:13px;margin:16px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff}
+  textarea{min-height:70px}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 16px}
+  .chk{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px}.chk input{width:16px;height:16px}
+  button.primary{background:var(--brand);color:#fff;border:0;padding:10px 18px;border-radius:8px;font:inherit;cursor:pointer;font-weight:600}
+  button.ghost{background:#fff;border:1px solid var(--line);padding:8px 14px;border-radius:8px;font:inherit;cursor:pointer}
+  table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}
+  .msg{padding:10px 12px;border-radius:8px;margin:10px 0;display:none}.msg.ok{display:block;background:#dcfce7;color:var(--ok)}.msg.err{display:block;background:#fee2e2;color:#b91c1c}
+  .login{max-width:360px;margin:60px auto}
+  .bar{display:flex;align-items:flex-end;gap:2px;height:120px;margin-top:8px}.bar div{flex:1;background:var(--brand);opacity:.85;border-radius:3px 3px 0 0;min-height:1px;position:relative}
+  .bar div:hover::after{content:attr(data-t);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#111;color:#fff;font-size:11px;padding:2px 6px;border-radius:4px;white-space:nowrap}
+  .net{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:10px}.net h4{margin:0 0 4px;font-size:13px}
+  small{color:var(--muted)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header><h1>GPA Calculator — Admin</h1><span id="who"></span><button id="logout" class="hidden">Log out</button></header>
+
+<section id="login" class="login card">
+  <h2>Sign in</h2>
+  <div id="loginMsg" class="msg"></div>
+  <label>Username</label><input id="u" type="text" autocomplete="username">
+  <label>Password</label><input id="p" type="password" autocomplete="current-password">
+  <p><button class="primary" id="doLogin">Sign in</button></p>
+  <small>API base: <span id="apiBase"></span></small>
+</section>
+
+<div id="app" class="hidden">
+<nav>
+  <a data-tab="dash" class="active">Dashboard</a>
+  <a data-tab="ads">Ads</a>
+  <a data-tab="appcfg">App</a>
+  <a data-tab="devices">Devices</a>
+  <a data-tab="events">Events</a>
+  <a data-tab="account">Account</a>
+</nav>
+<main>
+  <!-- ------------------------------------------------ Dashboard -->
+  <div id="tab-dash">
+    <div class="grid" id="tiles"></div>
+    <div class="card"><h2>Active devices — last 30 days</h2><div class="bar" id="chartActive"></div><small>Hover a bar for the exact value. Days are UTC.</small></div>
+    <div class="row">
+      <div class="card"><h2>New installs — last 30 days</h2><div class="bar" id="chartNew"></div></div>
+      <div class="card"><h2>Calculations — last 30 days</h2><div class="bar" id="chartCalcs"></div></div>
+    </div>
+    <div class="row">
+      <div class="card"><h2>Top calculators (30d)</h2><table id="topCalcs"></table></div>
+      <div class="card"><h2>Ad impressions (7d)</h2><table id="adImp"></table></div>
+    </div>
+    <div class="row">
+      <div class="card"><h2>App versions (active 30d)</h2><table id="versions"></table></div>
+      <div class="card"><h2>Countries</h2><table id="countries"></table></div>
+      <div class="card"><h2>Android versions</h2><table id="os"></table></div>
+      <div class="card"><h2>Top devices</h2><table id="models"></table></div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------ Ads config -->
+  <div id="tab-ads" class="hidden">
+    <div class="card">
+      <h2>Ad control</h2>
+      <div id="adsMsg" class="msg"></div>
+      <div class="chk"><input type="checkbox" id="ads.enabled"><label for="ads.enabled" style="margin:0">Ads enabled (master switch)</label></div>
+      <div class="chk"><input type="checkbox" id="ads.test_mode"><label for="ads.test_mode" style="margin:0">Test mode (Google test ad units, verbose logs) — turn OFF for production</label></div>
+      <label>Network priority (waterfall order, comma separated: admob, max, meta)</label><input type="text" id="ads.priority">
+      <div class="row">
+        <div><div class="chk"><input type="checkbox" id="ads.banner_enabled"><label for="ads.banner_enabled" style="margin:0">Banners</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.interstitial_enabled"><label for="ads.interstitial_enabled" style="margin:0">Interstitials</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.app_open_enabled"><label for="ads.app_open_enabled" style="margin:0">App open ads</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.rewarded_enabled"><label for="ads.rewarded_enabled" style="margin:0">Rewarded (remove ads for a while)</label></div></div>
+      </div>
+      <div class="row">
+        <div><div class="chk"><input type="checkbox" id="ads.banner_on_home"><label for="ads.banner_on_home" style="margin:0">Banner on home</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.banner_on_calculator"><label for="ads.banner_on_calculator" style="margin:0">Banner on calculator screens</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.banner_on_result"><label for="ads.banner_on_result" style="margin:0">Banner under results</label></div></div>
+      </div>
+      <h3>Frequency</h3>
+      <div class="row">
+        <div><label>Interstitial every N calculations</label><input type="number" id="ads.interstitial_every_n_calcs" min="1"></div>
+        <div><label>Min seconds between interstitials</label><input type="number" id="ads.interstitial_min_interval_sec" min="0"></div>
+        <div><label>Min seconds between app-open ads</label><input type="number" id="ads.app_open_min_interval_sec" min="0"></div>
+        <div><label>No interstitial for first N seconds after install</label><input type="number" id="ads.first_interstitial_delay_sec" min="0"></div>
+        <div><label>Ad-free minutes after rewarded video</label><input type="number" id="ads.reward_ad_free_minutes" min="0"></div>
+      </div>
+      <h3>Networks</h3>
+      <div class="net"><h4>Google AdMob</h4>
+        <div class="chk"><input type="checkbox" id="ads.admob.enabled"><label for="ads.admob.enabled" style="margin:0">Enabled</label></div>
+        <div class="row">
+          <div><label>App ID (reference only — must also be set at build time: ADMOB_APP_ID)</label><input type="text" id="ads.admob.app_id" placeholder="ca-app-pub-…~…"></div>
+          <div><label>Banner unit</label><input type="text" id="ads.admob.banner" placeholder="ca-app-pub-…/…"></div>
+          <div><label>Interstitial unit</label><input type="text" id="ads.admob.interstitial"></div>
+          <div><label>App open unit</label><input type="text" id="ads.admob.app_open"></div>
+          <div><label>Rewarded unit</label><input type="text" id="ads.admob.rewarded"></div>
+        </div>
+      </div>
+      <div class="net"><h4>AppLovin MAX</h4>
+        <div class="chk"><input type="checkbox" id="ads.max.enabled"><label for="ads.max.enabled" style="margin:0">Enabled</label></div>
+        <div class="row">
+          <div><label>SDK key (reference only — must be set at build time: APPLOVIN_SDK_KEY)</label><input type="text" id="ads.max.sdk_key"></div>
+          <div><label>Banner unit</label><input type="text" id="ads.max.banner"></div>
+          <div><label>Interstitial unit</label><input type="text" id="ads.max.interstitial"></div>
+          <div><label>App open unit</label><input type="text" id="ads.max.app_open"></div>
+          <div><label>Rewarded unit</label><input type="text" id="ads.max.rewarded"></div>
+        </div>
+      </div>
+      <div class="net"><h4>Meta Audience Network</h4>
+        <div class="chk"><input type="checkbox" id="ads.meta.enabled"><label for="ads.meta.enabled" style="margin:0">Enabled</label></div>
+        <div class="row">
+          <div><label>Banner placement</label><input type="text" id="ads.meta.banner" placeholder="APP_ID_PLACEMENT_ID"></div>
+          <div><label>Interstitial placement</label><input type="text" id="ads.meta.interstitial"></div>
+          <div><label>Rewarded placement</label><input type="text" id="ads.meta.rewarded"></div>
+        </div>
+        <small>Meta has no app-open format; it is skipped for that slot.</small>
+      </div>
+      <p><button class="primary" id="saveAds">Save ad settings</button> <small>Apps pick up changes on next launch (config is cached up to 6 hours).</small></p>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------ App config -->
+  <div id="tab-appcfg" class="hidden">
+    <div class="card">
+      <h2>App settings</h2>
+      <div id="appMsg" class="msg"></div>
+      <div class="row">
+        <div><label>Latest version code (shows flexible update prompt when higher than installed)</label><input type="number" id="app.latest_version_code"></div>
+        <div><label>Force update if installed version code is below</label><input type="number" id="app.force_update_below"></div>
+      </div>
+      <label>Update message</label><input type="text" id="app.update_message">
+      <div class="row">
+        <div><label>Privacy policy URL</label><input type="text" id="app.privacy_url"></div>
+        <div><label>Terms URL</label><input type="text" id="app.terms_url"></div>
+        <div><label>Contact email</label><input type="text" id="app.contact_email"></div>
+        <div><label>More apps URL</label><input type="text" id="app.more_apps_url"></div>
+      </div>
+      <label>Share text</label><textarea id="app.share_text"></textarea>
+      <h3>Announcement (shown once per id)</h3>
+      <div class="chk"><input type="checkbox" id="app.announcement.enabled"><label for="app.announcement.enabled" style="margin:0">Enabled</label></div>
+      <div class="row">
+        <div><label>Id (change it to show again)</label><input type="text" id="app.announcement.id"></div>
+        <div><label>Title</label><input type="text" id="app.announcement.title"></div>
+        <div><label>Button label</label><input type="text" id="app.announcement.button"></div>
+        <div><label>Link URL (optional)</label><input type="text" id="app.announcement.url"></div>
+      </div>
+      <label>Body</label><textarea id="app.announcement.body"></textarea>
+      <h3>Features</h3>
+      <div class="row">
+        <div><div class="chk"><input type="checkbox" id="features.cloud_save"><label for="features.cloud_save" style="margin:0">Cloud save</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="features.analytics"><label for="features.analytics" style="margin:0">Analytics</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="features.rate_prompt"><label for="features.rate_prompt" style="margin:0">Rate prompt</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="features.in_app_update"><label for="features.in_app_update" style="margin:0">In-app update</label></div></div>
+        <div><label>Rate prompt after N calculations</label><input type="number" id="features.rate_prompt_after_calcs" min="0"></div>
+      </div>
+      <p><button class="primary" id="saveApp">Save app settings</button></p>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------ Devices -->
+  <div id="tab-devices" class="hidden">
+    <div class="card"><h2>Recent devices <small id="devTotal"></small></h2><table id="devices"></table>
+      <p><button class="ghost" id="devPrev">‹ Prev</button> <span id="devPage">1</span> <button class="ghost" id="devNext">Next ›</button></p></div>
+  </div>
+
+  <!-- ------------------------------------------------ Events -->
+  <div id="tab-events" class="hidden">
+    <div class="card"><h2>Recent events</h2>
+      <p><select id="evName"><option value="">All events (7d counts shown)</option></select> <button class="ghost" id="evReload">Reload</button></p>
+      <table id="events"></table></div>
+  </div>
+
+  <!-- ------------------------------------------------ Account -->
+  <div id="tab-account" class="hidden">
+    <div class="card"><h2>Change password</h2><div id="pwMsg" class="msg"></div>
+      <label>Current password</label><input type="password" id="pwOld">
+      <label>New password (min 8)</label><input type="password" id="pwNew">
+      <p><button class="primary" id="savePw">Update password</button></p></div>
+  </div>
+</main>
+</div>
+
+<script>
+(function(){
+  // The admin page lives inside the backend folder, so the API is one level up.
+  const API = location.pathname.replace(/\/admin\/?[^/]*$/, '') + '/api/v1';
+  document.getElementById('apiBase').textContent = API;
+  let token = localStorage.getItem('gpa_admin_token') || '';
+  let config = null;
+  let devPage = 1;
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmtTs = t => t ? new Date(t * 1000).toLocaleString() : '';
+
+  async function api(method, path, body){
+    const res = await fetch(API + path, {method, headers: {'Content-Type':'application/json', ...(token ? {Authorization:'Bearer ' + token} : {})}, body: body ? JSON.stringify(body) : undefined});
+    let j; try { j = await res.json(); } catch(e){ j = {ok:false, error:'Bad response ' + res.status}; }
+    if (res.status === 401 && path !== '/admin/login') { logout(); }
+    if (!j.ok) throw new Error(j.error || 'Request failed');
+    return j.data;
+  }
+  function msg(id, text, ok){ const el = $(id); el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); setTimeout(()=>{ el.className='msg'; }, 5000); }
+  function logout(){ token=''; localStorage.removeItem('gpa_admin_token'); $('app').classList.add('hidden'); $('login').classList.remove('hidden'); $('logout').classList.add('hidden'); $('who').textContent=''; }
+
+  // ---- login
+  $('doLogin').onclick = async () => {
+    try {
+      const d = await api('POST', '/admin/login', {username: $('u').value, password: $('p').value});
+      token = d.token; localStorage.setItem('gpa_admin_token', token);
+      start();
+    } catch(e){ msg('loginMsg', e.message, false); }
+  };
+  $('p').addEventListener('keydown', e => { if (e.key === 'Enter') $('doLogin').click(); });
+  $('logout').onclick = async () => { try { await api('POST','/admin/logout'); } catch(e){} logout(); };
+
+  async function start(){
+    try {
+      const me = await api('GET', '/admin/me');
+      $('who').textContent = me.username;
+      $('login').classList.add('hidden'); $('app').classList.remove('hidden'); $('logout').classList.remove('hidden');
+      showTab('dash');
+    } catch(e){ logout(); }
+  }
+
+  // ---- tabs
+  document.querySelectorAll('nav a').forEach(a => a.onclick = () => showTab(a.dataset.tab));
+  function showTab(t){
+    document.querySelectorAll('nav a').forEach(a => a.classList.toggle('active', a.dataset.tab === t));
+    ['dash','ads','appcfg','devices','events','account'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
+    if (t === 'dash') loadStats();
+    if (t === 'ads' || t === 'appcfg') loadConfig();
+    if (t === 'devices') loadDevices();
+    if (t === 'events') loadEvents();
+  }
+
+  // ---- dashboard
+  function bars(el, rows, key){
+    const max = Math.max(1, ...rows.map(r => r[key]));
+    el.innerHTML = rows.map(r => `<div style="height:${Math.max(1, r[key] / max * 100)}%" data-t="${r.day}: ${r[key]}"></div>`).join('');
+  }
+  function table(el, rows, cols){
+    el.innerHTML = '<tr>' + cols.map(c => '<th>' + esc(c[0]) + '</th>').join('') + '</tr>' +
+      rows.map(r => '<tr>' + cols.map(c => '<td>' + esc(typeof c[1] === 'function' ? c[1](r) : r[c[1]]) + '</td>').join('') + '</tr>').join('');
+  }
+  async function loadStats(){
+    try {
+      const s = await api('GET', '/admin/stats');
+      const o = s.overview;
+      const tiles = [['Total installs', o.total_devices], ['New today', o.new_today], ['New (7d)', o.new_7d], ['New (30d)', o.new_30d],
+        ['Active today (DAU)', o.dau], ['Weekly active', o.wau], ['Monthly active', o.mau], ['Online now (5 min)', o.active_now],
+        ['Calculations today', o.calcs_today], ['Calculations (7d)', o.calcs_7d], ['Calculations (30d)', o.calcs_30d], ['Saved to cloud', o.saved_total], ['Ad impressions (7d)', o.ad_impressions_7d]];
+      $('tiles').innerHTML = tiles.map(t => `<div class="tile"><span>${t[0]}</span><b>${t[1].toLocaleString()}</b></div>`).join('');
+      bars($('chartActive'), s.daily, 'active'); bars($('chartNew'), s.daily, 'new'); bars($('chartCalcs'), s.daily, 'calcs');
+      table($('topCalcs'), s.top_calculators, [['Calculator','calc'],['Uses','count']]);
+      table($('adImp'), s.ad_impressions, [['Network / format','key'],['Impressions','count']]);
+      table($('versions'), s.versions, [['Version', r => (r.v||'?') + ' (' + (r.code||'?') + ')'],['Devices','n']]);
+      table($('countries'), s.countries, [['Country', r => r.country || '?'],['Devices','n']]);
+      table($('os'), s.os_versions, [['Android', r => r.v || '?'],['Devices','n']]);
+      table($('models'), s.models, [['Device', r => (r.manufacturer||'') + ' ' + (r.model||'')],['Devices','n']]);
+    } catch(e){ alert(e.message); }
+  }
+
+  // ---- config forms (ids are dotted paths into the config object)
+  function get(obj, path){ return path.split('.').reduce((o,k) => (o == null ? undefined : o[k]), obj); }
+  function set(obj, path, v){ const ks = path.split('.'); let o = obj; ks.slice(0,-1).forEach(k => { if (!o[k]) o[k] = {}; o = o[k]; }); o[ks[ks.length-1]] = v; }
+  function fillForm(){
+    document.querySelectorAll('#tab-ads [id*="."], #tab-appcfg [id*="."]').forEach(el => {
+      const v = get(config, el.id);
+      if (el.type === 'checkbox') el.checked = !!v;
+      else if (Array.isArray(v)) el.value = v.join(', ');
+      else el.value = v ?? '';
+    });
+  }
+  function readForm(prefix){
+    const out = JSON.parse(JSON.stringify(config));
+    document.querySelectorAll('#tab-' + prefix + ' [id*="."]').forEach(el => {
+      let v;
+      if (el.type === 'checkbox') v = el.checked;
+      else if (el.id === 'ads.priority') v = el.value.split(',').map(s => s.trim()).filter(Boolean);
+      else if (el.type === 'number') v = Number(el.value || 0);
+      else v = el.value;
+      set(out, el.id, v);
+    });
+    delete out.updated_at;
+    return out;
+  }
+  async function loadConfig(){ try { config = await api('GET', '/admin/config'); fillForm(); } catch(e){ alert(e.message); } }
+  $('saveAds').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('ads')); fillForm(); msg('adsMsg', 'Saved. Apps will use the new settings on next launch.', true); } catch(e){ msg('adsMsg', e.message, false); } };
+  $('saveApp').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('appcfg')); fillForm(); msg('appMsg', 'Saved.', true); } catch(e){ msg('appMsg', e.message, false); } };
+
+  // ---- devices
+  async function loadDevices(){
+    try {
+      const d = await api('GET', '/admin/devices?page=' + devPage);
+      $('devTotal').textContent = '(' + d.total + ' total)'; $('devPage').textContent = devPage;
+      table($('devices'), d.items, [['Device','device_id'],['Model', r => (r.manufacturer||'') + ' ' + (r.model||'')],['Android','os_version'],['App', r => (r.app_version||'') + ' (' + (r.app_version_code||'') + ')'],['Country','country'],['Opens','open_count'],['First seen', r => fmtTs(r.first_seen)],['Last seen', r => fmtTs(r.last_seen)]]);
+    } catch(e){ alert(e.message); }
+  }
+  $('devPrev').onclick = () => { if (devPage > 1) { devPage--; loadDevices(); } };
+  $('devNext').onclick = () => { devPage++; loadDevices(); };
+
+  // ---- events
+  async function loadEvents(){
+    try {
+      const d = await api('GET', '/admin/events?limit=200&name=' + encodeURIComponent($('evName').value));
+      const sel = $('evName'); const cur = sel.value;
+      sel.innerHTML = '<option value="">All events</option>' + d.names.map(n => `<option value="${esc(n.name)}">${esc(n.name)} (${n.n})</option>`).join('');
+      sel.value = cur;
+      table($('events'), d.items, [['Time', r => fmtTs(r.ts)],['Device','device_id'],['Event','name'],['Params','params'],['App','app_version_code']]);
+    } catch(e){ alert(e.message); }
+  }
+  $('evReload').onclick = loadEvents; $('evName').onchange = loadEvents;
+
+  // ---- account
+  $('savePw').onclick = async () => { try { await api('POST', '/admin/password', {old_password: $('pwOld').value, new_password: $('pwNew').value}); msg('pwMsg', 'Password updated', true); $('pwOld').value=''; $('pwNew').value=''; } catch(e){ msg('pwMsg', e.message, false); } };
+
+  if (token) start();
+})();
+</script>
+</body>
+</html>

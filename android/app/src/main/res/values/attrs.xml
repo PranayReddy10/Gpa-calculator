@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="DonutChartView">
+        <attr name="ringColor" format="color" />
+        <attr name="progressColor" format="color" />
+        <attr name="ringWidth" format="dimension" />
+    </declare-styleable>
+    <declare-styleable name="BarChartView">
+        <attr name="barColorA" format="color" />
+        <attr name="barColorB" format="color" />
+    </declare-styleable>
+</resources>

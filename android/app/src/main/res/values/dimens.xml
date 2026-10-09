@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="screen_padding">16dp</dimen>
+    <dimen name="card_radius">20dp</dimen>
+    <dimen name="icon_circle">44dp</dimen>
+    <dimen name="result_primary_text">40sp</dimen>
+</resources>

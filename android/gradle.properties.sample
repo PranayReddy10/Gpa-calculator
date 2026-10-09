@@ -1,0 +1,5 @@
+# Optional per-machine overrides. Put these in ~/.gradle/gradle.properties or pass -P flags.
+# API_BASE_URL=https://yourdomain.com/gpa-api/
+# APP_API_KEY=same-value-as-backend-config
+# ADMOB_APP_ID=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
+# APPLOVIN_SDK_KEY=your-applovin-sdk-key

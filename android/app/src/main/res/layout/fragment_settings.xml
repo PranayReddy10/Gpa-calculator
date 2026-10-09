@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
+        app:liftOnScroll="true">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="@string/nav_settings"
+            app:titleTextAppearance="@style/Text.GPA.Headline" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <!-- Ads card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_ads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="?attr/colorPrimaryContainer"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_block"
+                        app:tint="?attr/colorOnPrimaryContainer" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/ads_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="@string/settings_remove_ads"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textSize="15sp" />
+
+                        <TextView
+                            android:id="@+id/ads_sub"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:textSize="12.5sp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_watch_ad"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/play"
+                        app:icon="@drawable/ic_play" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView style="@style/SettingsHeader" android:text="@string/settings_appearance" />
+
+            <com.google.android.material.card.MaterialCardView style="@style/SettingsCard">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_dark_mode" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_theme" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/theme_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginBottom="12dp"
+                        app:selectionRequired="true"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/theme_system"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/theme_system" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/theme_light"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/theme_light"
+                            app:icon="@drawable/ic_light_mode" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/theme_dark"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/theme_dark"
+                            app:icon="@drawable/ic_dark_mode" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_palette" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_dynamic" />
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_dynamic"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_vibrate" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_haptics" />
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_haptics"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView style="@style/SettingsHeader" android:text="@string/settings_data" />
+
+            <com.google.android.material.card.MaterialCardView style="@style/SettingsCard">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_history" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_save_history" />
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_history"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_cloud" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_cloud" />
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_cloud"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout android:id="@+id/row_restore" style="@style/SettingsRow.Clickable">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_sync" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_restore" />
+                        <ImageView style="@style/SettingsChevron" />
+                    </LinearLayout>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout android:id="@+id/row_clear" style="@style/SettingsRow.Clickable">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_delete" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_clear_history" />
+                        <ImageView style="@style/SettingsChevron" />
+                    </LinearLayout>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_shield" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_analytics" />
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_analytics"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <View android:id="@+id/divider_privacy" style="@style/SettingsDivider" android:visibility="gone" />
+
+                    <LinearLayout android:id="@+id/row_privacy_options" style="@style/SettingsRow.Clickable" android:visibility="gone">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_shield" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_privacy_options" />
+                        <ImageView style="@style/SettingsChevron" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView style="@style/SettingsHeader" android:text="@string/settings_about" />
+
+            <com.google.android.material.card.MaterialCardView style="@style/SettingsCard">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout android:id="@+id/row_rate" style="@style/SettingsRow.Clickable">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_star" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_rate" />
+                        <ImageView style="@style/SettingsChevron" />
+                    </LinearLayout>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout android:id="@+id/row_share" style="@style/SettingsRow.Clickable">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_share" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_share" />
+                        <ImageView style="@style/SettingsChevron" />
+                    </LinearLayout>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout android:id="@+id/row_privacy" style="@style/SettingsRow.Clickable">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_info" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_privacy" />
+                        <ImageView style="@style/SettingsChevron" />
+                    </LinearLayout>
+
+                    <View style="@style/SettingsDivider" />
+
+                    <LinearLayout android:id="@+id/row_contact" style="@style/SettingsRow.Clickable">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_mail" />
+                        <TextView android:id="@+id/contact_label" style="@style/SettingsLabel" android:text="Contact us" />
+                        <ImageView style="@style/SettingsChevron" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/version"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:textAppearance="@style/Text.GPA.Label" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

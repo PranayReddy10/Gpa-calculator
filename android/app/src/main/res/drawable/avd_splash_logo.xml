@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:drawable="@drawable/splash_logo_vector">
+    <target android:name="logo">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.6"
+                    android:valueTo="1"
+                    android:duration="600"
+                    android:interpolator="@android:interpolator/overshoot" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.6"
+                    android:valueTo="1"
+                    android:duration="600"
+                    android:interpolator="@android:interpolator/overshoot" />
+                <objectAnimator
+                    android:propertyName="rotation"
+                    android:valueFrom="-12"
+                    android:valueTo="0"
+                    android:duration="600"
+                    android:interpolator="@android:interpolator/decelerate_cubic" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

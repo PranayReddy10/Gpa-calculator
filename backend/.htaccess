@@ -1,0 +1,17 @@
+# Route every request through index.php (shared hosting / Apache + mod_rewrite)
+Options -Indexes
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Keep the admin page, setup and real files reachable
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+# Never serve these
+<FilesMatch "^(config\.php|schema.*\.sql|composer\.(json|lock))$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

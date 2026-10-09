@@ -1,0 +1,14 @@
+# backend secrets / local data
+backend/config.php
+backend/data/*.sqlite*
+# android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+*.jks
+*.keystore
+.DS_Store

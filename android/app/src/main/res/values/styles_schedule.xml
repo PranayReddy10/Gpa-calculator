@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ScheduleHeader">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">end</item>
+        <item name="android:textAppearance">@style/TextAppearance.Material3.LabelMedium</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+    <style name="ScheduleCell">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">end</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+</resources>

@@ -1,0 +1,192 @@
+package com.gpa.calculator.core;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class EngineTest {
+
+    private static Map<String, String> map(String... kv) {
+        Map<String, String> m = new HashMap<>();
+        for (int i = 0; i < kv.length; i += 2) m.put(kv[i], kv[i + 1]);
+        return m;
+    }
+
+    private static CalcResult first(List<CalcResult> r) {
+        return r.get(0);
+    }
+
+    @Test
+    public void registryHasUniqueIdsAndIcons() {
+        assertTrue(CalculatorRegistry.count() >= 40);
+        for (Calculator c : CalculatorRegistry.all()) {
+            assertNotNull(c.id());
+            assertNotNull(c.icon());
+            assertTrue(c.icon().startsWith("ic_"));
+        }
+    }
+
+    @Test
+    public void marksPercent() {
+        List<CalcResult> r = CalculatorRegistry.byId("marks_percent").compute(map("obtained", "450", "total", "500"));
+        assertEquals(90.0, first(r).numeric, 1e-9);
+        assertEquals("O", r.get(1).display);
+    }
+
+    @Test
+    public void marksPercentRejectsOverflow() {
+        try {
+            CalculatorRegistry.byId("marks_percent").compute(map("obtained", "600", "total", "500"));
+            fail();
+        } catch (CalcException e) {
+            assertEquals("obtained", e.inputKey);
+        }
+    }
+
+    @Test
+    public void generalPercentModes() {
+        Calculator c = CalculatorRegistry.byId("general_percent");
+        assertEquals(50.0, first(c.compute(map("mode", "What is X% of Y?", "x", "25", "y", "200"))).numeric, 1e-9);
+        assertEquals(12.5, first(c.compute(map("mode", "X is what % of Y?", "x", "25", "y", "200"))).numeric, 1e-9);
+        assertEquals(500.0, first(c.compute(map("mode", "X is Y% of what?", "x", "25", "y", "5"))).numeric, 1e-9);
+    }
+
+    @Test
+    public void percentChange() {
+        List<CalcResult> r = CalculatorRegistry.byId("percent_change").compute(map("old", "80", "new", "100"));
+        assertEquals("Increase", first(r).label);
+        assertEquals(25.0, first(r).numeric, 1e-9);
+    }
+
+    @Test
+    public void sgpaAndCgpa() {
+        double s = GradeMath.sgpa(Arrays.asList(4.0, 3.0, 3.0), Arrays.asList(10.0, 9.0, 8.0));
+        assertEquals((40 + 27 + 24) / 10.0, s, 1e-9);
+        double c = GradeMath.cgpa(Arrays.asList(9.1, 8.5), Arrays.asList(20.0, 22.0));
+        assertEquals((9.1 * 20 + 8.5 * 22) / 42, c, 1e-9);
+        assertEquals(10.0, GradeScale.TEN_POINT.pointsFor("O"), 0);
+        assertEquals(3.7, GradeScale.FOUR_POINT.pointsFor("A-"), 0);
+    }
+
+    @Test
+    public void cgpaToPercentCbse() {
+        List<CalcResult> r = CalculatorRegistry.byId("cgpa_to_percent").compute(map("cgpa", "8", "scale", "CGPA × 9.5 (CBSE)"));
+        assertEquals(76.0, first(r).numeric, 1e-9);
+    }
+
+    @Test
+    public void attendance() {
+        List<CalcResult> r = CalculatorRegistry.byId("attendance").compute(map("attended", "30", "total", "40", "required", "75"));
+        assertEquals(75.0, first(r).numeric, 1e-9);
+        assertEquals("Classes you can skip", r.get(1).label);
+        assertEquals(0.0, r.get(1).numeric, 0);
+        r = CalculatorRegistry.byId("attendance").compute(map("attended", "20", "total", "40", "required", "75"));
+        assertEquals("Classes to attend in a row", r.get(1).label);
+        assertEquals(40.0, r.get(1).numeric, 0); // (0.75*40-20)/(0.25) = 40
+    }
+
+    @Test
+    public void emi() {
+        EmiMath.Result res = EmiMath.compute(1_000_000, 8.5, 240);
+        assertEquals(8678.23, res.emi, 0.01);
+        assertEquals(240, res.schedule.size());
+        assertEquals(0, res.schedule.get(239).balance, 0.01);
+        assertEquals(res.totalPayment, res.totalInterest + 1_000_000, 1.0);
+        // zero-rate loan
+        assertEquals(1000.0, EmiMath.emi(12000, 0, 12), 1e-9);
+    }
+
+    @Test
+    public void emiCalculatorYearsToMonths() {
+        List<CalcResult> r = CalculatorRegistry.byId("emi").compute(map("principal", "500000", "rate", "10", "tenure", "5", "unit", "Years"));
+        assertEquals(10623.52, first(r).numeric, 0.01);
+    }
+
+    @Test
+    public void simpleAndCompoundInterest() {
+        List<CalcResult> si = CalculatorRegistry.byId("simple_interest").compute(map("p", "10000", "r", "5", "t", "2", "unit", "Years"));
+        assertEquals(1000.0, first(si).numeric, 1e-9);
+        List<CalcResult> ci = CalculatorRegistry.byId("compound_interest").compute(map("p", "10000", "r", "10", "t", "2", "unit", "Years", "n", "Yearly"));
+        assertEquals(12100.0, first(ci).numeric, 1e-6);
+    }
+
+    @Test
+    public void sip() {
+        List<CalcResult> r = CalculatorRegistry.byId("sip").compute(map("amount", "5000", "rate", "12", "years", "10"));
+        assertEquals(1161695, first(r).numeric, 1.0);
+        assertEquals(600000.0, r.get(1).numeric, 1e-6);
+    }
+
+    @Test
+    public void gstAddAndRemove() {
+        Calculator c = CalculatorRegistry.byId("tax");
+        List<CalcResult> add = c.compute(map("amount", "1000", "rate", "18%", "mode", "Add tax (amount is before tax)"));
+        assertEquals(1180.0, first(add).numeric, 1e-9);
+        List<CalcResult> rem = c.compute(map("amount", "1180", "rate", "18%", "mode", "Remove tax (amount includes tax)"));
+        assertEquals(1000.0, first(rem).numeric, 1e-9);
+        List<CalcResult> custom = c.compute(map("amount", "200", "rate", "Custom", "custom", "7.5", "mode", "Add tax (amount is before tax)"));
+        assertEquals(215.0, first(custom).numeric, 1e-9);
+    }
+
+    @Test
+    public void tipSplit() {
+        List<CalcResult> r = CalculatorRegistry.byId("tip").compute(map("bill", "1000", "tip", "10", "people", "4"));
+        assertEquals(1100.0, first(r).numeric, 1e-9);
+        assertEquals(275.0, r.get(2).numeric, 1e-9);
+    }
+
+    @Test
+    public void age() {
+        List<CalcResult> r = CalculatorRegistry.byId("age").compute(map("dob", "2000-02-29", "asof", "2024-03-01"));
+        assertEquals("24 years, 0 months, 1 days", first(r).display);
+    }
+
+    @Test
+    public void dateDifference() {
+        List<CalcResult> r = CalculatorRegistry.byId("date_diff").compute(map("from", "2024-01-01", "to", "2024-01-31", "inclusive", "Exclude end date"));
+        assertEquals(30.0, first(r).numeric, 0);
+    }
+
+    @Test
+    public void bmi() {
+        List<CalcResult> r = CalculatorRegistry.byId("bmi").compute(map("units", "Metric (kg, cm)", "weight", "70", "height", "175"));
+        assertEquals(22.9, first(r).numeric, 0.05);
+        assertEquals("Normal", r.get(1).display);
+    }
+
+    @Test
+    public void converters() {
+        List<CalcResult> r = CalculatorRegistry.byId("unit_length").compute(map("value", "1", "from", "Kilometre (km)", "to", "Mile"));
+        assertEquals(0.621371, first(r).numeric, 1e-5);
+        r = CalculatorRegistry.byId("unit_temperature").compute(map("value", "100", "from", "Celsius"));
+        assertEquals(212.0, r.get(1).numeric, 1e-9);
+    }
+
+    @Test
+    public void averageList() {
+        List<CalcResult> r = CalculatorRegistry.byId("average").compute(map("values", "10, 20 30\n40"));
+        assertEquals(25.0, first(r).numeric, 1e-9);
+        assertEquals(25.0, r.get(1).numeric, 1e-9);
+    }
+
+    @Test
+    public void search() {
+        assertTrue(CalculatorRegistry.search("loan", null).size() >= 2);
+        assertEquals(CalculatorRegistry.byCategory(Category.PERCENTAGE).size(), CalculatorRegistry.search("", Category.PERCENTAGE).size());
+    }
+
+    @Test
+    public void formatting() {
+        java.util.Locale.setDefault(java.util.Locale.US);
+        assertEquals("1,234.5", Fmt.fmt(1234.5, 2).replace(' ', ' '));
+        assertEquals("0", Fmt.fmt(-0.0001, 2));
+    }
+}

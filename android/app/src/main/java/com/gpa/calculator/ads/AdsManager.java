@@ -1,0 +1,337 @@
+package com.gpa.calculator.ads;
+
+import android.app.Activity;
+import android.app.Application;
+import android.content.Context;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
+
+import com.gpa.calculator.data.Prefs;
+import com.gpa.calculator.data.remote.Analytics;
+import com.gpa.calculator.data.remote.ConfigStore;
+import com.gpa.calculator.data.remote.model.RemoteConfig;
+import com.gpa.calculator.ui.SplashActivity;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Central ad orchestration. Reads the admin-panel config (network priority, frequency caps, on/off
+ * switches) and walks the enabled providers in order until one serves. Nothing here is network
+ * specific; see the AdProvider implementations.
+ */
+public final class AdsManager implements ConfigStore.Listener {
+    private static final String TAG = "AdsManager";
+    private static AdsManager instance;
+
+    private final Context app;
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final Map<String, AdProvider> providers = new LinkedHashMap<>();
+    private boolean consentOk;
+    private boolean started;
+    private long lastInterstitialAt;
+    private long lastAppOpenAt;
+    private boolean fullScreenShowing;
+    private int calcsSinceInterstitial;
+    @Nullable private Activity currentActivity;
+
+    private AdsManager(Context c) {
+        app = c.getApplicationContext();
+        providers.put("admob", new AdmobProvider());
+        providers.put("max", new MaxProvider());
+        providers.put("meta", new MetaProvider());
+        ConfigStore.get(app).addListener(this);
+        trackActivities();
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(new DefaultLifecycleObserver() {
+            @Override public void onStart(@NonNull LifecycleOwner owner) {
+                main.postDelayed(() -> maybeShowAppOpen(currentActivity), 150);
+            }
+        });
+    }
+
+    public static synchronized AdsManager get(Context c) {
+        if (instance == null) instance = new AdsManager(c);
+        return instance;
+    }
+
+    private RemoteConfig.Ads cfg() { return ConfigStore.get(app).config().ads; }
+
+    // ------------------------------------------------------------------ lifecycle
+    private void trackActivities() {
+        ((Application) app).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+            @Override public void onActivityCreated(@NonNull Activity a, @Nullable Bundle b) {}
+            @Override public void onActivityStarted(@NonNull Activity a) { currentActivity = a; }
+            @Override public void onActivityResumed(@NonNull Activity a) { currentActivity = a; }
+            @Override public void onActivityPaused(@NonNull Activity a) {}
+            @Override public void onActivityStopped(@NonNull Activity a) {}
+            @Override public void onActivitySaveInstanceState(@NonNull Activity a, @NonNull Bundle b) {}
+            @Override public void onActivityDestroyed(@NonNull Activity a) { if (currentActivity == a) currentActivity = null; }
+        });
+    }
+
+    /** Call from the first visible Activity after consent has been gathered. */
+    public void start(boolean consentGranted) {
+        consentOk = consentGranted;
+        if (started) return;
+        started = true;
+        initProviders();
+    }
+
+    @Override
+    public void onConfigChanged(RemoteConfig config) {
+        if (started) initProviders();
+    }
+
+    private void initProviders() {
+        if (!consentOk) return;
+        RemoteConfig.Ads ads = cfg();
+        if (!ads.enabled) return;
+        for (String name : ads.priority) {
+            AdProvider p = providers.get(name);
+            RemoteConfig.Network n = ads.network(name);
+            if (p == null || n == null || !n.enabled) continue;
+            p.init(app, n, ads.test_mode, () -> {
+                preloadInterstitial(p);
+                preloadAppOpen(p);
+            });
+        }
+    }
+
+    // ------------------------------------------------------------------ gating
+    public boolean isAdFree() {
+        return Prefs.get(app).adFreeUntil() > System.currentTimeMillis();
+    }
+
+    public long adFreeRemainingMs() {
+        return Math.max(0, Prefs.get(app).adFreeUntil() - System.currentTimeMillis());
+    }
+
+    private boolean adsAllowed() {
+        return started && consentOk && cfg().enabled && !isAdFree();
+    }
+
+    private List<AdProvider> ordered() {
+        List<AdProvider> out = new ArrayList<>();
+        RemoteConfig.Ads ads = cfg();
+        for (String name : ads.priority) {
+            AdProvider p = providers.get(name);
+            RemoteConfig.Network n = ads.network(name);
+            if (p != null && n != null && n.enabled && p.isInitialized()) out.add(p);
+        }
+        return out;
+    }
+
+    // ------------------------------------------------------------------ banner
+    public static final class BannerHandle {
+        AdProvider provider;
+        View view;
+        boolean cancelled;
+
+        public void destroy() {
+            cancelled = true;
+            if (provider != null && view != null) {
+                ViewGroup parent = (ViewGroup) view.getParent();
+                if (parent != null) parent.removeView(view);
+                provider.destroyBanner(view);
+            }
+            view = null;
+        }
+    }
+
+    /** Loads a banner into the container, trying each network in priority order. */
+    public BannerHandle attachBanner(Activity activity, ViewGroup container, String placement) {
+        BannerHandle handle = new BannerHandle();
+        RemoteConfig.Ads ads = cfg();
+        boolean placementOn = "home".equals(placement) ? ads.banner_on_home
+                : "result".equals(placement) ? ads.banner_on_result : ads.banner_on_calculator;
+        if (!adsAllowed() || !ads.banner_enabled || !placementOn) {
+            container.setVisibility(View.GONE);
+            return handle;
+        }
+        container.post(() -> tryBanner(activity, container, ordered(), 0, handle, placement));
+        return handle;
+    }
+
+    private void tryBanner(Activity activity, ViewGroup container, List<AdProvider> list, int idx, BannerHandle handle, String placement) {
+        if (handle.cancelled || activity.isFinishing() || activity.isDestroyed()) return;
+        if (idx >= list.size()) {
+            container.setVisibility(View.GONE);
+            return;
+        }
+        AdProvider p = list.get(idx);
+        p.loadBanner(activity, container, new AdProvider.BannerCallback() {
+            @Override public void onLoaded(View banner) {
+                if (handle.cancelled) { p.destroyBanner(banner); return; }
+                container.removeAllViews();
+                container.addView(banner);
+                container.setVisibility(View.VISIBLE);
+                container.setAlpha(0f);
+                container.animate().alpha(1f).setDuration(350).start();
+                handle.provider = p;
+                handle.view = banner;
+                Analytics.get(app).log("ad_impression", "network", p.name(), "format", "banner_" + placement);
+            }
+
+            @Override public void onFailed(String reason) {
+                Log.i(TAG, p.name() + " banner failed: " + reason);
+                tryBanner(activity, container, list, idx + 1, handle, placement);
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------ interstitial
+    private void preloadInterstitial(AdProvider p) {
+        if (!cfg().interstitial_enabled) return;
+        p.loadInterstitial(app, new AdProvider.LoadCallback() {
+            @Override public void onLoaded() { Log.i(TAG, p.name() + " interstitial ready"); }
+            @Override public void onFailed(String reason) { Log.i(TAG, p.name() + " interstitial failed: " + reason); }
+        });
+    }
+
+    /**
+     * Call after every completed calculation. Shows an interstitial when the frequency cap from the
+     * admin panel is reached and enough time has passed.
+     */
+    public void onCalculation(Activity activity, @Nullable Runnable after) {
+        calcsSinceInterstitial++;
+        RemoteConfig.Ads ads = cfg();
+        long now = System.currentTimeMillis();
+        boolean due = adsAllowed() && ads.interstitial_enabled
+                && calcsSinceInterstitial >= Math.max(1, ads.interstitial_every_n_calcs)
+                && now - lastInterstitialAt >= ads.interstitial_min_interval_sec * 1000L
+                && now - Prefs.get(app).firstOpenAt() >= ads.first_interstitial_delay_sec * 1000L
+                && !fullScreenShowing;
+        if (!due) {
+            if (after != null) after.run();
+            return;
+        }
+        for (AdProvider p : ordered()) {
+            if (p.isInterstitialReady()) {
+                fullScreenShowing = true;
+                p.showInterstitial(activity, new AdProvider.ShowCallback() {
+                    @Override public void onDismissed() {
+                        fullScreenShowing = false;
+                        lastInterstitialAt = System.currentTimeMillis();
+                        calcsSinceInterstitial = 0;
+                        Analytics.get(app).log("ad_impression", "network", p.name(), "format", "interstitial");
+                        preloadInterstitial(p);
+                        if (after != null) after.run();
+                    }
+
+                    @Override public void onFailed(String reason) {
+                        fullScreenShowing = false;
+                        preloadInterstitial(p);
+                        if (after != null) after.run();
+                    }
+                });
+                return;
+            }
+            preloadInterstitial(p);
+        }
+        if (after != null) after.run();
+    }
+
+    // ------------------------------------------------------------------ app open
+    private void preloadAppOpen(AdProvider p) {
+        if (!cfg().app_open_enabled || !p.supportsAppOpen()) return;
+        p.loadAppOpen(app, new AdProvider.LoadCallback() {
+            @Override public void onLoaded() { Log.i(TAG, p.name() + " app open ready"); }
+            @Override public void onFailed(String reason) { Log.i(TAG, p.name() + " app open failed: " + reason); }
+        });
+    }
+
+    private void maybeShowAppOpen(@Nullable Activity activity) {
+        if (activity == null || activity instanceof SplashActivity || activity.isFinishing()) return;
+        RemoteConfig.Ads ads = cfg();
+        long now = System.currentTimeMillis();
+        if (!adsAllowed() || !ads.app_open_enabled || fullScreenShowing) return;
+        if (now - lastAppOpenAt < ads.app_open_min_interval_sec * 1000L) return;
+        if (now - Prefs.get(app).firstOpenAt() < 5000) return; // never on the very first launch
+        for (AdProvider p : ordered()) {
+            if (p.isAppOpenReady()) {
+                fullScreenShowing = true;
+                p.showAppOpen(activity, new AdProvider.ShowCallback() {
+                    @Override public void onDismissed() {
+                        fullScreenShowing = false;
+                        lastAppOpenAt = System.currentTimeMillis();
+                        Analytics.get(app).log("ad_impression", "network", p.name(), "format", "app_open");
+                        preloadAppOpen(p);
+                    }
+
+                    @Override public void onFailed(String reason) {
+                        fullScreenShowing = false;
+                        preloadAppOpen(p);
+                    }
+                });
+                return;
+            }
+            preloadAppOpen(p);
+        }
+    }
+
+    // ------------------------------------------------------------------ rewarded (ad-free time)
+    public boolean rewardedAvailable() {
+        return started && consentOk && cfg().enabled && cfg().rewarded_enabled && !ordered().isEmpty();
+    }
+
+    public void preloadRewarded() {
+        if (!rewardedAvailable()) return;
+        for (AdProvider p : ordered()) {
+            p.loadRewarded(app, new AdProvider.LoadCallback() {
+                @Override public void onLoaded() {}
+                @Override public void onFailed(String reason) {}
+            });
+        }
+    }
+
+    public interface RewardResult {
+        void onResult(boolean rewarded, String message);
+    }
+
+    /** Shows a rewarded ad; on completion grants the ad-free window configured in the admin panel. */
+    public void showRewarded(Activity activity, RewardResult result) {
+        if (!rewardedAvailable()) {
+            result.onResult(false, "Not available right now");
+            return;
+        }
+        for (AdProvider p : ordered()) {
+            if (p.isRewardedReady()) {
+                fullScreenShowing = true;
+                final boolean[] earned = {false};
+                p.showRewarded(activity, new AdProvider.RewardCallback() {
+                    @Override public void onRewarded() {
+                        earned[0] = true;
+                        long until = System.currentTimeMillis() + cfg().reward_ad_free_minutes * 60_000L;
+                        Prefs.get(app).setAdFreeUntil(until);
+                        Analytics.get(app).log("reward_earned", "network", p.name());
+                    }
+
+                    @Override public void onDismissed() {
+                        fullScreenShowing = false;
+                        result.onResult(earned[0], earned[0] ? "Enjoy " + cfg().reward_ad_free_minutes + " minutes without ads" : "Watch the full video to remove ads");
+                    }
+
+                    @Override public void onFailed(String reason) {
+                        fullScreenShowing = false;
+                        result.onResult(false, reason);
+                    }
+                });
+                return;
+            }
+        }
+        preloadRewarded();
+        result.onResult(false, "Ad is still loading, try again in a moment");
+    }
+}

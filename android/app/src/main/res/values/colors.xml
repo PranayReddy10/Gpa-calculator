@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 tonal palette seeded from the brand red of the original app -->
+    <color name="md_primary">#C8102E</color>
+    <color name="md_on_primary">#FFFFFF</color>
+    <color name="md_primary_container">#FFDAD6</color>
+    <color name="md_on_primary_container">#410002</color>
+    <color name="md_secondary">#775652</color>
+    <color name="md_on_secondary">#FFFFFF</color>
+    <color name="md_secondary_container">#FFDAD4</color>
+    <color name="md_on_secondary_container">#2C1512</color>
+    <color name="md_tertiary">#705C2E</color>
+    <color name="md_on_tertiary">#FFFFFF</color>
+    <color name="md_tertiary_container">#FBDFA6</color>
+    <color name="md_on_tertiary_container">#261900</color>
+    <color name="md_error">#BA1A1A</color>
+    <color name="md_on_error">#FFFFFF</color>
+    <color name="md_error_container">#FFDAD6</color>
+    <color name="md_on_error_container">#410002</color>
+    <color name="md_background">#FFF8F7</color>
+    <color name="md_on_background">#231919</color>
+    <color name="md_surface">#FFF8F7</color>
+    <color name="md_on_surface">#231919</color>
+    <color name="md_surface_variant">#F5DDDA</color>
+    <color name="md_on_surface_variant">#534341</color>
+    <color name="md_outline">#857371</color>
+    <color name="md_outline_variant">#D8C2BF</color>
+    <color name="md_inverse_surface">#392E2D</color>
+    <color name="md_inverse_on_surface">#FFEDEA</color>
+    <color name="md_inverse_primary">#FFB4AB</color>
+    <color name="md_surface_container_lowest">#FFFFFF</color>
+    <color name="md_surface_container_low">#FFF0EE</color>
+    <color name="md_surface_container">#FCEAE8</color>
+    <color name="md_surface_container_high">#F6E4E2</color>
+    <color name="md_surface_container_highest">#F0DEDC</color>
+    <color name="md_surface_dim">#E8D6D4</color>
+    <color name="md_surface_bright">#FFF8F7</color>
+
+    <!-- Brand / accents -->
+    <color name="brand_red">#E53935</color>
+    <color name="brand_red_dark">#B71C1C</color>
+    <color name="header_gradient_start">#E53935</color>
+    <color name="header_gradient_end">#C2185B</color>
+    <color name="heart">#E53935</color>
+    <color name="chart_principal">#C8102E</color>
+    <color name="chart_interest">#F6A192</color>
+    <color name="splash_background">#C8102E</color>
+    <color name="success">#2E7D32</color>
+    <color name="warning">#EF6C00</color>
+</resources>
