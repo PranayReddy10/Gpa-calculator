@@ -138,17 +138,13 @@ public class SettingsFragment extends Fragment {
         AdsManager.get(requireContext()).preloadRewarded();
 
         // ---- about
-        b.rowRate.setOnClickListener(v -> RatePrompt.launch(requireActivity()));
+        b.rowRate.setOnClickListener(v -> RatePrompt.openStore(requireActivity()));
         b.rowShare.setOnClickListener(v -> {
             String text = cfg.app.share_text == null || cfg.app.share_text.isEmpty() ? getString(R.string.share_text_default) : cfg.app.share_text;
             ShareUtil.shareText(requireContext(), text);
             Analytics.get(requireContext()).log("share_app");
         });
-        b.rowPrivacy.setOnClickListener(v -> {
-            String url = cfg.app.privacy_url == null || cfg.app.privacy_url.isEmpty()
-                    ? com.gpa.calculator.data.remote.ApiClient.baseUrl() + "privacy" : cfg.app.privacy_url;
-            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception ignored) {}
-        });
+        b.rowPrivacy.setOnClickListener(v -> startActivity(new Intent(requireContext(), com.gpa.calculator.ui.PrivacyActivity.class)));
         b.rowContact.setVisibility(cfg.app.contact_email == null || cfg.app.contact_email.isEmpty() ? View.GONE : View.VISIBLE);
         b.rowContact.setOnClickListener(v -> {
             Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + cfg.app.contact_email))

@@ -221,7 +221,7 @@ public class MainActivity extends BaseActivity {
                 break;
             }
             case "rate":
-                RatePrompt.launch(this);
+                RatePrompt.openStore(this);
                 break;
             case "share": {
                 String text = ConfigStore.get(this).config().app.share_text;
