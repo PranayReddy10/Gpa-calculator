@@ -57,6 +57,11 @@ public class BasicCalculatorActivity extends CalcActivityBase {
         }
         render();
         attachBanner(b.adContainer);
+        // Compact native only when the display area has room for it next to the expression.
+        b.display.post(() -> {
+            float dp = b.display.getHeight() / getResources().getDisplayMetrics().density;
+            if (dp >= 260) attachNative(b.nativeContainer, true);
+        });
     }
 
     private void buildKeys() {

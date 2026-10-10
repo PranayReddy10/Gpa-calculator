@@ -91,6 +91,14 @@
         <div><div class="chk"><input type="checkbox" id="ads.interstitial_enabled"><label for="ads.interstitial_enabled" style="margin:0">Interstitials</label></div></div>
         <div><div class="chk"><input type="checkbox" id="ads.app_open_enabled"><label for="ads.app_open_enabled" style="margin:0">App open ads</label></div></div>
         <div><div class="chk"><input type="checkbox" id="ads.rewarded_enabled"><label for="ads.rewarded_enabled" style="margin:0">Rewarded (remove ads for a while)</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.native_enabled"><label for="ads.native_enabled" style="margin:0">Native ads</label></div></div>
+      </div>
+      <h3>Placements</h3>
+      <div class="row">
+        <div><div class="chk"><input type="checkbox" id="ads.native_in_calculators"><label for="ads.native_in_calculators" style="margin:0">Native ad card on every calculator screen</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.interstitial_after_calc"><label for="ads.interstitial_after_calc" style="margin:0">Interstitial after calculations</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.interstitial_on_open"><label for="ads.interstitial_on_open" style="margin:0">Interstitial when opening a calculator</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="ads.interstitial_on_exit"><label for="ads.interstitial_on_exit" style="margin:0">Interstitial when leaving a calculator</label></div></div>
       </div>
       <div class="row">
         <div><div class="chk"><input type="checkbox" id="ads.banner_on_home"><label for="ads.banner_on_home" style="margin:0">Banner on home</label></div></div>
@@ -100,6 +108,7 @@
       <h3>Frequency</h3>
       <div class="row">
         <div><label>Interstitial every N calculations</label><input type="number" id="ads.interstitial_every_n_calcs" min="1"></div>
+        <div><label>Interstitial every N calculator opens</label><input type="number" id="ads.interstitial_open_every_n" min="1"></div>
         <div><label>Min seconds between interstitials</label><input type="number" id="ads.interstitial_min_interval_sec" min="0"></div>
         <div><label>Min seconds between app-open ads</label><input type="number" id="ads.app_open_min_interval_sec" min="0"></div>
         <div><label>No interstitial for first N seconds after install</label><input type="number" id="ads.first_interstitial_delay_sec" min="0"></div>
@@ -114,6 +123,7 @@
           <div><label>Interstitial unit</label><input type="text" id="ads.admob.interstitial"></div>
           <div><label>App open unit</label><input type="text" id="ads.admob.app_open"></div>
           <div><label>Rewarded unit</label><input type="text" id="ads.admob.rewarded"></div>
+          <div><label>Native unit</label><input type="text" id="ads.admob.native_ad"></div>
         </div>
       </div>
       <div class="net"><h4>AppLovin MAX</h4>
@@ -124,6 +134,7 @@
           <div><label>Interstitial unit</label><input type="text" id="ads.max.interstitial"></div>
           <div><label>App open unit</label><input type="text" id="ads.max.app_open"></div>
           <div><label>Rewarded unit</label><input type="text" id="ads.max.rewarded"></div>
+          <div><label>Native unit</label><input type="text" id="ads.max.native_ad"></div>
         </div>
       </div>
       <div class="net"><h4>Meta Audience Network</h4>
@@ -132,8 +143,9 @@
           <div><label>Banner placement</label><input type="text" id="ads.meta.banner" placeholder="APP_ID_PLACEMENT_ID"></div>
           <div><label>Interstitial placement</label><input type="text" id="ads.meta.interstitial"></div>
           <div><label>Rewarded placement</label><input type="text" id="ads.meta.rewarded"></div>
+          <div><label>Native placement</label><input type="text" id="ads.meta.native_ad"></div>
         </div>
-        <small>Meta has no app-open format; it is skipped for that slot.</small>
+        <small>Meta has no app-open format and no compact native; those slots fall through to the next network.</small>
       </div>
       <p><button class="primary" id="saveAds">Save ad settings</button> <small>Apps pick up changes on next launch (config is cached up to 6 hours).</small></p>
     </div>

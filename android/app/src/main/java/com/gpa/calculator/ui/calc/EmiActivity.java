@@ -79,6 +79,7 @@ public class EmiActivity extends CalcActivityBase {
         updateLabels();
         recalculate();
         attachBanner(b.adContainer);
+        attachNative(b.nativeContainer, false);
     }
 
     private void updateLabels() {

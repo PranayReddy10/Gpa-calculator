@@ -28,6 +28,12 @@ public interface AdProvider {
         void onRewarded();
     }
 
+    /** adView is ready to add to a container; the provider keeps what it needs to destroy it in a view tag. */
+    interface NativeCallback {
+        void onLoaded(View adView);
+        void onFailed(String reason);
+    }
+
     String name();
 
     /** Called once per process; must be idempotent. */
@@ -58,4 +64,12 @@ public interface AdProvider {
     void showRewarded(Activity activity, RewardCallback cb);
 
     boolean supportsAppOpen();
+
+    /**
+     * Loads a native ad rendered with this app's own layout.
+     * @param compact true for a small variant without the large media view (e.g. the keypad calculator).
+     */
+    void loadNative(Activity activity, ViewGroup container, boolean compact, NativeCallback cb);
+
+    void destroyNative(View adView);
 }

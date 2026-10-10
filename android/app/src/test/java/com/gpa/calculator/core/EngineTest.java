@@ -217,4 +217,45 @@ public class EngineTest {
         assertEquals("basic", CalculatorRegistry.all().get(0).id());
         assertNotNull(CalculatorRegistry.byId("currency"));
     }
+
+    @Test
+    public void unitPrice() {
+        Calculator c = CalculatorRegistry.byId("unit_price");
+        // A: 500 g for 120 -> 240/kg ; B: 1 kg for 220 -> 220/kg (best)
+        List<CalcResult> r = c.compute(map("a_price", "120", "a_qty", "500", "a_unit", "g", "b_price", "220", "b_qty", "1", "b_unit", "kg"));
+        assertEquals("Item B", first(r).display);
+        assertEquals(240.0, r.get(1).numeric, 1e-9);
+        assertEquals(24.0, r.get(2).numeric, 1e-9);   // per 100 g
+        assertEquals(220.0, r.get(3).numeric, 1e-9);
+        // three items in volume, C best
+        r = c.compute(map("a_price", "100", "a_qty", "1", "a_unit", "L", "b_price", "55", "b_qty", "500", "b_unit", "ml", "c_price", "180", "c_qty", "2", "c_unit", "L"));
+        assertEquals("Item C", first(r).display);
+        // mixing weight and volume is rejected
+        try {
+            c.compute(map("a_price", "1", "a_qty", "1", "a_unit", "kg", "b_price", "1", "b_qty", "1", "b_unit", "L"));
+            fail();
+        } catch (CalcException e) { assertEquals("b_unit", e.inputKey); }
+        // half-filled item C is rejected
+        try {
+            c.compute(map("a_price", "1", "a_qty", "1", "a_unit", "kg", "b_price", "1", "b_qty", "1", "b_unit", "kg", "c_price", "5"));
+            fail();
+        } catch (CalcException e) { assertEquals("c_qty", e.inputKey); }
+    }
+
+    @Test
+    public void loanCompare() {
+        Calculator c = CalculatorRegistry.byId("loan_compare");
+        // Same amount; A cheaper rate but 2% fee, B higher rate no fee
+        List<CalcResult> r = c.compute(map("a_amount", "1000000", "a_rate", "8.5", "a_years", "20", "a_fee", "2",
+                "b_rate", "9", "b_years", "20"));
+        double aInterest = EmiMath.compute(1_000_000, 8.5, 240).totalInterest;
+        double bInterest = EmiMath.compute(1_000_000, 9, 240).totalInterest;
+        double aTotal = aInterest + 20000, bTotal = bInterest;
+        assertTrue(first(r).label.startsWith(aTotal < bTotal ? "Loan A" : "Loan B"));
+        assertEquals(Math.abs(aTotal - bTotal), first(r).numeric, 1e-6);
+        assertEquals(8678.23, r.get(1).numeric, 0.01);
+        // identical offers
+        r = c.compute(map("a_amount", "500000", "a_rate", "10", "a_years", "5", "b_rate", "10", "b_years", "5"));
+        assertEquals("Both loans cost the same", first(r).display);
+    }
 }

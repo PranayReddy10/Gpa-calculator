@@ -81,12 +81,18 @@ public class CalculatorActivity extends CalcActivityBase {
 
         Repository.get(this).historyFor(calc.id()).observe(this, this::showRecent);
         attachBanner(b.adContainer);
+        attachNative(b.nativeContainer, false);
     }
 
     // ------------------------------------------------------------------ form
     private void buildForm() {
         LayoutInflater li = getLayoutInflater();
         for (CalcInput in : calc.inputs()) {
+            if (!in.section.isEmpty()) {
+                android.widget.TextView h = (android.widget.TextView) li.inflate(R.layout.view_input_section, b.inputs, false);
+                h.setText(in.section);
+                b.inputs.addView(h);
+            }
             switch (in.type) {
                 case SELECT: {
                     TextInputLayout til = (TextInputLayout) li.inflate(R.layout.view_input_select, b.inputs, false);
@@ -303,7 +309,7 @@ public class CalculatorActivity extends CalcActivityBase {
         }
         for (TextInputLayout l : layouts.values()) l.setError(null);
         b.result.getRoot().animate().alpha(0f).translationY(40f).setDuration(200)
-                .withEndAction(() -> b.result.getRoot().setVisibility(View.INVISIBLE)).start();
+                .withEndAction(() -> b.result.getRoot().setVisibility(View.GONE)).start();
         Haptics.tick(b.btnCalculate);
     }
 }

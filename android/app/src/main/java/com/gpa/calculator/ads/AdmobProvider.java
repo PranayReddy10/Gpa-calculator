@@ -18,10 +18,16 @@ import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.appopen.AppOpenAd;
+import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.nativead.MediaView;
+import com.google.android.gms.ads.nativead.NativeAd;
+import com.google.android.gms.ads.nativead.NativeAdOptions;
+import com.google.android.gms.ads.nativead.NativeAdView;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.gpa.calculator.R;
 import com.gpa.calculator.data.remote.model.RemoteConfig;
 
 /** Google AdMob. Uses Google's public test unit IDs whenever test mode is on in the admin panel. */
@@ -31,6 +37,7 @@ public final class AdmobProvider implements AdProvider {
     private static final String TEST_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712";
     private static final String TEST_APP_OPEN = "ca-app-pub-3940256099942544/9257395921";
     private static final String TEST_REWARDED = "ca-app-pub-3940256099942544/5224354917";
+    private static final String TEST_NATIVE = "ca-app-pub-3940256099942544/2247696110";
 
     private RemoteConfig.Network cfg = new RemoteConfig.Network();
     private boolean testMode;
@@ -200,5 +207,72 @@ public final class AdmobProvider implements AdProvider {
             @Override public void onAdFailedToShowFullScreenContent(@NonNull AdError e) { cb.onFailed(e.getMessage()); }
         });
         ad.show(activity, item -> cb.onRewarded());
+    }
+
+    // ---------------------------------------------------------------- native
+    @Override
+    public void loadNative(Activity activity, ViewGroup container, boolean compact, NativeCallback cb) {
+        NativeAdOptions options = new NativeAdOptions.Builder()
+                .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_RIGHT)
+                .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_LANDSCAPE)
+                .build();
+        AdLoader loader = new AdLoader.Builder(activity, id(cfg.native_ad, TEST_NATIVE))
+                .forNativeAd(ad -> {
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        ad.destroy();
+                        return;
+                    }
+                    NativeAdView v = (NativeAdView) android.view.LayoutInflater.from(activity).inflate(R.layout.native_ad_admob, container, false);
+                    bind(v, ad, compact);
+                    v.setTag(R.id.native_ad_tag, ad);
+                    cb.onLoaded(v);
+                })
+                .withAdListener(new AdListener() {
+                    @Override public void onAdFailedToLoad(@NonNull LoadAdError e) { cb.onFailed(e.getMessage()); }
+                })
+                .withNativeAdOptions(options)
+                .build();
+        loader.loadAd(request());
+    }
+
+    private static void bind(NativeAdView v, NativeAd ad, boolean compact) {
+        android.widget.TextView headline = v.findViewById(R.id.ad_headline);
+        android.widget.TextView advertiser = v.findViewById(R.id.ad_advertiser);
+        android.widget.TextView body = v.findViewById(R.id.ad_body);
+        android.widget.ImageView icon = v.findViewById(R.id.ad_icon);
+        android.widget.Button cta = v.findViewById(R.id.ad_cta);
+        MediaView media = v.findViewById(R.id.ad_media);
+
+        headline.setText(ad.getHeadline());
+        v.setHeadlineView(headline);
+
+        String adv = ad.getAdvertiser() != null ? ad.getAdvertiser() : ad.getStore();
+        advertiser.setText(adv == null ? "" : adv);
+        advertiser.setVisibility(adv == null ? View.GONE : View.VISIBLE);
+        v.setAdvertiserView(advertiser);
+
+        if (ad.getBody() == null || compact) body.setVisibility(View.GONE);
+        else body.setText(ad.getBody());
+        v.setBodyView(body);
+
+        if (ad.getIcon() != null) icon.setImageDrawable(ad.getIcon().getDrawable());
+        else icon.setVisibility(View.GONE);
+        v.setIconView(icon);
+
+        if (ad.getCallToAction() == null) cta.setVisibility(View.INVISIBLE);
+        else cta.setText(ad.getCallToAction());
+        v.setCallToActionView(cta);
+
+        if (compact) media.setVisibility(View.GONE);
+        else v.setMediaView(media);
+
+        v.setNativeAd(ad);
+    }
+
+    @Override
+    public void destroyNative(View adView) {
+        Object tag = adView.getTag(R.id.native_ad_tag);
+        if (tag instanceof NativeAd) ((NativeAd) tag).destroy();
+        if (adView instanceof NativeAdView) ((NativeAdView) adView).destroy();
     }
 }

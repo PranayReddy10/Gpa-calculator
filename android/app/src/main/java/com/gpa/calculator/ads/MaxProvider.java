@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.applovin.mediation.MaxAd;
 import com.applovin.mediation.MaxAdFormat;
@@ -20,9 +21,14 @@ import com.applovin.mediation.ads.MaxAdView;
 import com.applovin.mediation.ads.MaxAppOpenAd;
 import com.applovin.mediation.ads.MaxInterstitialAd;
 import com.applovin.mediation.ads.MaxRewardedAd;
+import com.applovin.mediation.nativeAds.MaxNativeAdListener;
+import com.applovin.mediation.nativeAds.MaxNativeAdLoader;
+import com.applovin.mediation.nativeAds.MaxNativeAdView;
+import com.applovin.mediation.nativeAds.MaxNativeAdViewBinder;
 import com.applovin.sdk.AppLovinMediationProvider;
 import com.applovin.sdk.AppLovinSdk;
 import com.applovin.sdk.AppLovinSdkInitializationConfiguration;
+import com.gpa.calculator.R;
 import com.gpa.calculator.data.remote.model.RemoteConfig;
 
 /** AppLovin MAX. The SDK key and ad unit IDs come from the admin panel config. */
@@ -198,5 +204,63 @@ public final class MaxProvider implements AdProvider {
         earned = false;
         rewardCb = cb;
         rewarded.showAd();
+    }
+
+    // ---------------------------------------------------------------- native
+    @Override
+    public void loadNative(Activity activity, ViewGroup container, boolean compact, NativeCallback cb) {
+        if (!has(cfg.native_ad)) { cb.onFailed("no native unit"); return; }
+        MaxNativeAdViewBinder binder = new MaxNativeAdViewBinder.Builder(R.layout.native_ad_max)
+                .setTitleTextViewId(R.id.ad_headline)
+                .setBodyTextViewId(R.id.ad_body)
+                .setAdvertiserTextViewId(R.id.ad_advertiser)
+                .setIconImageViewId(R.id.ad_icon)
+                .setMediaContentViewGroupId(R.id.ad_media)
+                .setOptionsContentViewGroupId(R.id.ad_options)
+                .setCallToActionButtonId(R.id.ad_cta)
+                .build();
+        MaxNativeAdView adView = new MaxNativeAdView(binder, activity);
+        if (compact) {
+            adView.findViewById(R.id.ad_media).setVisibility(View.GONE);
+            adView.findViewById(R.id.ad_body).setVisibility(View.GONE);
+        }
+        MaxNativeAdLoader loader = new MaxNativeAdLoader(cfg.native_ad, activity);
+        loader.setNativeAdListener(new MaxNativeAdListener() {
+            private boolean reported;
+
+            @Override public void onNativeAdLoaded(@Nullable MaxNativeAdView view, @NonNull MaxAd ad) {
+                if (reported) return;
+                reported = true;
+                if (activity.isFinishing() || activity.isDestroyed()) {
+                    loader.destroy(ad);
+                    loader.destroy();
+                    return;
+                }
+                View out = view != null ? view : adView;
+                out.setTag(R.id.native_ad_tag, new Object[]{loader, ad});
+                cb.onLoaded(out);
+            }
+
+            @Override public void onNativeAdLoadFailed(@NonNull String adUnitId, @NonNull MaxError error) {
+                if (reported) return;
+                reported = true;
+                loader.destroy();
+                cb.onFailed(error.getMessage());
+            }
+
+            @Override public void onNativeAdClicked(@NonNull MaxAd ad) {}
+        });
+        loader.loadAd(adView);
+    }
+
+    @Override
+    public void destroyNative(View adView) {
+        Object tag = adView.getTag(R.id.native_ad_tag);
+        if (tag instanceof Object[]) {
+            Object[] t = (Object[]) tag;
+            MaxNativeAdLoader loader = (MaxNativeAdLoader) t[0];
+            loader.destroy((MaxAd) t[1]);
+            loader.destroy();
+        }
     }
 }

@@ -29,6 +29,8 @@ public abstract class CalcActivityBase extends BaseActivity {
     protected boolean favourite;
     @Nullable private MenuItem favItem;
     @Nullable private AdsManager.BannerHandle banner;
+    @Nullable private AdsManager.NativeHandle nativeAd;
+    private boolean exiting;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -45,6 +47,9 @@ public abstract class CalcActivityBase extends BaseActivity {
             finish();
             return;
         }
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() { exitWithAd(); }
+        });
         Repository.get(this).isFavourite(calc.id(), f -> {
             favourite = f;
             updateFavIcon(false);
@@ -63,6 +68,21 @@ public abstract class CalcActivityBase extends BaseActivity {
     protected void attachBanner(View container) {
         padBottomInset(container);
         banner = AdsManager.get(this).attachBanner(this, (android.view.ViewGroup) container, "calculator");
+    }
+
+    /** Native ad card for this calculator (hidden unless an ad loads). */
+    protected void attachNative(android.view.ViewGroup container, boolean compact) {
+        if (nativeAd != null) nativeAd.destroy();
+        nativeAd = AdsManager.get(this).attachNative(this, container, calc.id(), compact);
+    }
+
+    /** Back / up: optionally shows the exit interstitial configured in the admin panel, then closes. */
+    protected void exitWithAd() {
+        if (exiting) return;
+        exiting = true;
+        AdsManager.get(this).onCalculatorExit(this, () -> {
+            if (!isFinishing()) finishAfterTransition();
+        });
     }
 
     @Override
@@ -88,7 +108,7 @@ public abstract class CalcActivityBase extends BaseActivity {
             return true;
         }
         if (item.getItemId() == android.R.id.home) {
-            finishAfterTransition();
+            exitWithAd();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -113,6 +133,7 @@ public abstract class CalcActivityBase extends BaseActivity {
     @Override
     protected void onDestroy() {
         if (banner != null) banner.destroy();
+        if (nativeAd != null) nativeAd.destroy();
         super.onDestroy();
     }
 }

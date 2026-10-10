@@ -95,6 +95,13 @@
                 app:cornerRadius="16dp"
                 app:icon="@drawable/ic_add" />
 
+            <FrameLayout
+                android:id="@+id/native_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/formula"
                 android:layout_width="match_parent"

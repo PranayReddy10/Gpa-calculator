@@ -12,6 +12,8 @@ public final class CalcInput {
     public String[] options = new String[0];
     public String defaultValue = "";
     public boolean optional = false;
+    /** When set, the form shows this as a group header above the field (e.g. "Item A"). */
+    public String section = "";
     public double min = -Double.MAX_VALUE;
     public double max = Double.MAX_VALUE;
 
@@ -38,4 +40,5 @@ public final class CalcInput {
     public CalcInput optional() { this.optional = true; return this; }
     public CalcInput range(double min, double max) { this.min = min; this.max = max; return this; }
     public CalcInput positive() { this.min = 0; return this; }
+    public CalcInput section(String s) { this.section = s; return this; }
 }
