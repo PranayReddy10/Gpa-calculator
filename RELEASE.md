@@ -65,18 +65,18 @@ ONESIGNAL_APP_ID=
 # must be higher than the version code live on Play
 VERSION_CODE=100
 VERSION_NAME=2.0.0
-
-RELEASE_STORE_FILE=/path/to/upload-key.jks
-RELEASE_STORE_PASSWORD=...
-RELEASE_KEY_ALIAS=...
-RELEASE_KEY_PASSWORD=...
 ```
+
+Signing: use **Build > Generate Signed App Bundle** in Android Studio and pick your `.jks` there;
+nothing about the keystore goes in local.properties. Only for command-line builds
+(`./gradlew bundleRelease`) add `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`,
+`RELEASE_KEY_ALIAS` and `RELEASE_KEY_PASSWORD`.
 
 Find the current version code in Play Console > **App bundle explorer**. Use any higher number.
 Put comments on their own line starting with `#`. A `.properties` file has no end-of-line comments.
 
 The release build **refuses to build** if the AdMob ID is the test ID or a placeholder, the API key
-is the default, the URL is not https, or the keystore is missing. Fix whatever it lists.
+is the default, the URL is not https, or (command-line builds) no keystore is set. Fix whatever it lists.
 
 ## 5. Build the bundle
 

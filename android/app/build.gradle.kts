@@ -52,6 +52,8 @@ val duplicateKeys: List<String> = rootProject.file("local.properties").let { f -
         .mapNotNull { Regex("""^([A-Za-z0-9_.]+)\s*[=:]""").find(it)?.groupValues?.get(1) }
         .groupingBy { it }.eachCount().filter { it.value > 1 }.keys.toList()
 }
+// Android Studio's "Generate Signed App Bundle / APK" wizard passes its keystore as these properties.
+val wizardSigning: Boolean = !project.findProperty("android.injected.signing.store.file")?.toString().isNullOrBlank()
 val releaseProblems: List<String> = buildList {
     if (duplicateKeys.isNotEmpty())
         add("local.properties sets ${duplicateKeys.joinToString()} more than once; only the LAST line counts. Delete the extra lines.")
@@ -65,8 +67,11 @@ val releaseProblems: List<String> = buildList {
     val api = setting("API_BASE_URL", "https://gpa.jntubooks.in/")
     if (!api.startsWith("https://") || api.contains("example.com"))
         add("API_BASE_URL must be your https backend URL, e.g. https://gpa.jntubooks.in/  Read: '$api'")
-    if (releaseStoreFile.isEmpty()) {
-        add("RELEASE_STORE_FILE is not set: point it at the keystore you use for Google Play (upload key).")
+    if (wizardSigning) {
+        // Build > Generate Signed App Bundle passes the keystore itself; nothing to check here.
+    } else if (releaseStoreFile.isEmpty()) {
+        add("No signing key. Use Build > Generate Signed App Bundle in Android Studio, " +
+            "or set RELEASE_STORE_FILE (+ passwords/alias) for command-line builds.")
     } else {
         val ks = rootProject.file(releaseStoreFile)
         if (!ks.exists()) {
@@ -132,7 +137,8 @@ android {
 
     buildTypes {
         release {
-            if (releaseStoreFile.isNotEmpty() && rootProject.file(releaseStoreFile).exists()) {
+            // With the Generate Signed wizard, AGP uses the wizard's key instead.
+            if (!wizardSigning && releaseStoreFile.isNotEmpty() && rootProject.file(releaseStoreFile).exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
             isDebuggable = false

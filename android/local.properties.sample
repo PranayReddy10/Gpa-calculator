@@ -18,9 +18,10 @@ ONESIGNAL_APP_ID=
 # Must be higher than the version code currently live on Play (Play Console > App bundle explorer)
 VERSION_CODE=100
 VERSION_NAME=2.0.0
-# The SAME keystore you used for the current Play Store version (upload key if Play App Signing
-# is on). Path is relative to the android/ folder or absolute. Never commit the keystore.
-RELEASE_STORE_FILE=/path/to/your-upload-key.jks
-RELEASE_STORE_PASSWORD=
-RELEASE_KEY_ALIAS=
-RELEASE_KEY_PASSWORD=
+# Signing: easiest is Android Studio > Build > Generate Signed App Bundle (pick your .jks there;
+# leave these out). For command-line builds (./gradlew bundleRelease) set them instead.
+# Use the SAME key as the version live on Play (upload key if Play App Signing is on).
+#RELEASE_STORE_FILE=/path/to/your-upload-key.jks
+#RELEASE_STORE_PASSWORD=
+#RELEASE_KEY_ALIAS=
+#RELEASE_KEY_PASSWORD=
