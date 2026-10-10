@@ -63,12 +63,14 @@ public final class MaxProvider implements AdProvider {
             onReady.run();
             return;
         }
-        if (manifestSdkKey(context).isEmpty()) {
+        String sdkKey = manifestSdkKey(context);
+        if (sdkKey.isEmpty()) {
             Log.w(TAG, "applovin.sdk.key missing from manifest; MAX disabled");
             return;
         }
+        // AppLovin SDK 13+: builder(sdkKey); the Context goes to AppLovinSdk.getInstance below.
         AppLovinSdkInitializationConfiguration initConfig = AppLovinSdkInitializationConfiguration
-                .builder(context.getApplicationContext())
+                .builder(sdkKey)
                 .setMediationProvider(AppLovinMediationProvider.MAX)
                 .build();
         AppLovinSdk sdk = AppLovinSdk.getInstance(context.getApplicationContext());
