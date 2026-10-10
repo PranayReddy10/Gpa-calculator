@@ -1,6 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
 }
+
+// Keys for this machine live in android/local.properties (never committed). A -P flag or a
+// ~/.gradle/gradle.properties entry with the same name takes precedence.
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+fun setting(name: String, default: String): String =
+    (project.findProperty(name)?.toString() ?: localProps.getProperty(name) ?: default).trim()
 
 android {
     namespace = "com.gpa.calculator"
@@ -15,17 +27,17 @@ android {
         versionCode = 100
         versionName = "2.0.0"
 
-        // --- Build-time configuration (override in local.properties / CI env) ---
+        // --- Build-time configuration: set these in android/local.properties (see local.properties.sample) ---
         // Backend base URL where backend/ is deployed, e.g. https://example.com/gpa-api/
-        buildConfigField("String", "API_BASE_URL", "\"${project.findProperty("API_BASE_URL") ?: "https://example.com/gpa-api/"}\"")
+        buildConfigField("String", "API_BASE_URL", "\"${setting("API_BASE_URL", "https://example.com/gpa-api/")}\"")
         // Shared secret that must match APP_API_KEY in backend/config.php
-        buildConfigField("String", "APP_API_KEY", "\"${project.findProperty("APP_API_KEY") ?: "change-me-app-key"}\"")
+        buildConfigField("String", "APP_API_KEY", "\"${setting("APP_API_KEY", "change-me-app-key")}\"")
         // AdMob application ID (NOT an ad unit). Google test app id by default.
-        manifestPlaceholders["admobAppId"] = project.findProperty("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
+        manifestPlaceholders["admobAppId"] = setting("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
         // OneSignal app ID (public). Can also be set/overridden from the admin panel (App tab).
-        buildConfigField("String", "ONESIGNAL_APP_ID", "\"${project.findProperty("ONESIGNAL_APP_ID") ?: ""}\"")
+        buildConfigField("String", "ONESIGNAL_APP_ID", "\"${setting("ONESIGNAL_APP_ID", "")}\"")
         // AppLovin MAX SDK key (leave empty to disable MAX entirely)
-        manifestPlaceholders["applovinSdkKey"] = project.findProperty("APPLOVIN_SDK_KEY") ?: ""
+        manifestPlaceholders["applovinSdkKey"] = setting("APPLOVIN_SDK_KEY", "")
 
         vectorDrawables.useSupportLibrary = true
         javaCompileOptions {

@@ -56,15 +56,18 @@ calculators, ad impressions by network, versions, countries, device models, 30-d
 
 1. Open `android/` in Android Studio (Ladybug or newer, JDK 17). The Gradle wrapper pins
    Gradle 8.14.3 and AGP 8.13.0.
-2. Put your keys in `~/.gradle/gradle.properties` (or pass `-P` flags):
+2. Put your keys in `android/local.properties` (Android Studio already created it with
+   `sdk.dir`; it is ignored by git). Copy the lines from `android/local.properties.sample`:
    ```
    API_BASE_URL=https://yourdomain.com/gpa-api/
    APP_API_KEY=<same value as APP_API_KEY in backend/config.php>
    ADMOB_APP_ID=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
-   APPLOVIN_SDK_KEY=<optional, leave unset to disable MAX>
+   APPLOVIN_SDK_KEY=<optional, leave empty to disable MAX>
    ONESIGNAL_APP_ID=<optional, can also be set in the admin panel App tab>
    ```
-   Without them the app runs with Google test ads and the backend disabled.
+   Then File > Sync Project with Gradle Files and rebuild. Never edit `BuildConfig.java` under
+   `app/build/`: it is regenerated from these values on every build. Without them the app runs
+   with Google test ads and the backend disabled.
 3. `./gradlew testDebugUnitTest` runs the calculator engine tests (21 tests).
 4. `./gradlew assembleRelease` — sign with the **same keystore** as the live app.
    `versionCode` in `app/build.gradle.kts` is 100; raise it above the current Play version.
