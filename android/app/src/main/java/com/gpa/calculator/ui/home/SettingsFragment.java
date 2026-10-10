@@ -163,6 +163,7 @@ public class SettingsFragment extends Fragment {
         AdsManager ads = AdsManager.get(requireContext());
         boolean show = ConfigStore.get(requireContext()).config().ads.enabled && ConfigStore.get(requireContext()).config().ads.rewarded_enabled;
         b.cardAds.setVisibility(show ? View.VISIBLE : View.GONE);
+        b.adsTitle.setText(getString(R.string.settings_remove_ads, ads.rewardMinutes()));
         long rem = ads.adFreeRemainingMs();
         if (rem > 0) {
             long min = rem / 60000;

@@ -33,7 +33,7 @@ final class AppConfig
                 'interstitial_min_interval_sec' => 60,
                 'app_open_min_interval_sec' => 240,
                 'first_interstitial_delay_sec' => 20,
-                'reward_ad_free_minutes' => 120,
+                'reward_ad_free_minutes' => 10,
                 'banner_on_home' => true,
                 'banner_on_calculator' => true,
                 'banner_on_result' => false,
@@ -122,6 +122,7 @@ final class AppConfig
             throw new HttpException(422, 'Duplicate network in priority list');
         }
         if ($cfg['ads']['interstitial_every_n_calcs'] < 1) throw new HttpException(422, 'interstitial_every_n_calcs must be >= 1');
+        if ($cfg['ads']['reward_ad_free_minutes'] < 1 || $cfg['ads']['reward_ad_free_minutes'] > 60) throw new HttpException(422, 'Ad-free minutes after a rewarded video must be between 1 and 60 (5–10 recommended)');
         if ($cfg['ads']['interstitial_open_every_n'] < 1) throw new HttpException(422, 'interstitial_open_every_n must be >= 1');
         $p = $cfg['app']['popup'];
         if (!in_array($p['primary_action'], ['dismiss', 'url', 'calculator', 'rate', 'share', 'update', 'notifications'], true)) throw new HttpException(422, 'Unknown pop-up action: ' . $p['primary_action']);
