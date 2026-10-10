@@ -20,7 +20,7 @@ public final class AcademicCalculators {
     private AcademicCalculators() {}
 
     public static List<Calculator> all() {
-        return Arrays.asList(new Sgpa(), new SgpaWithGrade(), new Cgpa(), new GpaToPercent(), new PercentToGpa(),
+        return Arrays.asList(new Sgpa(), new SgpaWithGrade(), new Cgpa(), new CgpaTarget(), new GpaToPercent(), new PercentToGpa(),
                 new CgpaToPercent(), new PercentToCgpa(), new GpaScaleConvert(), new FinalGradeNeeded(),
                 new Attendance(), new GradeFromMarks());
     }
@@ -267,5 +267,42 @@ public final class AcademicCalculators {
             r.add(CalcResult.text("Remark", GradeScale.remarkForPercent(pct)));
             return r;
         }
+    }
+
+    public static final class CgpaTarget extends SimpleCalc {
+        public CgpaTarget() {
+            super("cgpa_target", "CGPA target planner", "SGPA you need in the remaining semesters to reach a target CGPA",
+                    Category.ACADEMIC, "ic_school", "target goal required sgpa plan cgpa future semesters");
+        }
+
+        @Override public List<CalcInput> inputs() {
+            return Arrays.asList(
+                    CalcInput.number("current", "Current CGPA").range(0, 10).section("So far"),
+                    CalcInput.number("done", "Credits completed").range(0.5, 1000),
+                    CalcInput.number("target", "Target CGPA").range(0, 10).section("Goal"),
+                    CalcInput.number("remaining", "Credits remaining").range(0.5, 1000).hint("e.g. 2 semesters × 20 credits = 40"));
+        }
+
+        @Override public List<CalcResult> compute(Inputs in) {
+            double cur = in.num("current"), done = in.num("done"), target = in.num("target"), rem = in.num("remaining");
+            double total = done + rem;
+            double required = (target * total - cur * done) / rem;
+            double best = (cur * done + 10 * rem) / total;
+            List<CalcResult> r = new ArrayList<>();
+            if (required <= 0) r.add(CalcResult.primaryText("Required SGPA", "Already achieved"));
+            else if (required > 10) r.add(CalcResult.primaryText("Required SGPA", "Not reachable"));
+            else r.add(CalcResult.primary("Required SGPA in remaining semesters", required, 2, "", ""));
+            String verdict = required <= 0 ? "Target already met — keep it up"
+                    : required > 10 ? "Even 10 in every remaining semester gives " + Fmt.fmt(best, 2)
+                    : required <= cur ? "Keep your current pace"
+                    : required - cur <= 1 ? "Push a little harder"
+                    : "Ambitious — needs a big jump";
+            r.add(CalcResult.text("Verdict", verdict));
+            r.add(CalcResult.num("Highest CGPA still possible", best, 2));
+            r.add(CalcResult.num("Total credits", total, 1));
+            return r;
+        }
+
+        @Override public String formula() { return "Required = (Target × Total credits − Current × Done credits) ÷ Remaining credits"; }
     }
 }

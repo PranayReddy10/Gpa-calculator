@@ -103,6 +103,15 @@ public abstract class CalcActivityBase extends BaseActivity {
             if (v != null) { Anim.pop(v); Haptics.tick(v); }
             return true;
         }
+        if (item.getItemId() == R.id.action_pin) {
+            if (!com.gpa.calculator.ui.common.Shortcuts.pin(this, calc)) {
+                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), R.string.add_to_home_unsupported,
+                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
+            } else {
+                Analytics.get(this).log("shortcut_pin", "calc", calc.id());
+            }
+            return true;
+        }
         if (item.getItemId() == R.id.action_reset) {
             onReset();
             return true;
@@ -126,6 +135,7 @@ public abstract class CalcActivityBase extends BaseActivity {
         Prefs.get(this).incrementCalcCount();
         Analytics.get(this).log("calc_used", "calc", calc.id());
         com.gpa.calculator.push.PushManager.tagCalculation(this, calc.id());
+        com.gpa.calculator.ui.common.Shortcuts.reportUsed(this, calc);
         AdsManager.get(this).onCalculation(this, () -> RatePrompt.maybeShow(this));
     }
 

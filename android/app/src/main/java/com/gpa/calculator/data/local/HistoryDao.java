@@ -19,6 +19,9 @@ public interface HistoryDao {
     @Query("SELECT * FROM history ORDER BY createdAt DESC LIMIT :limit")
     List<HistoryEntity> recent(int limit);
 
+    @Query("SELECT * FROM history ORDER BY createdAt DESC LIMIT :limit")
+    LiveData<List<HistoryEntity>> recentLive(int limit);
+
     @Query("SELECT * FROM history WHERE calcId = :calcId ORDER BY createdAt DESC LIMIT :limit")
     LiveData<List<HistoryEntity>> byCalc(String calcId, int limit);
 

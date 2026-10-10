@@ -45,6 +45,9 @@ public final class Repository {
     // ---- history
     public LiveData<List<HistoryEntity>> history() { return db.history().all(); }
 
+    /** Newest history rows for the home screen's "Continue where you left off". */
+    public LiveData<List<HistoryEntity>> recentHistory() { return db.history().recentLive(100); }
+
     public LiveData<List<HistoryEntity>> historyFor(String calcId) { return db.history().byCalc(calcId, 20); }
 
     public void saveHistory(Calculator calc, Map<String, String> inputs, List<CalcResult> results, Runnable onSaved) {

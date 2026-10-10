@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon. Taps are routed by MainActivity (open_calc extra), same as push deep links. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_sc_sgpa"
+        android:shortcutId="static_sgpa"
+        android:shortcutLongLabel="@string/sc_sgpa_long"
+        android:shortcutShortLabel="@string/sc_sgpa">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.gpa.calculator.ui.MainActivity"
+            android:targetPackage="com.gpa.calculator">
+            <extra android:name="open_calc" android:value="sgpa_grade" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_sc_cgpa"
+        android:shortcutId="static_cgpa"
+        android:shortcutLongLabel="@string/sc_cgpa_long"
+        android:shortcutShortLabel="@string/sc_cgpa">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.gpa.calculator.ui.MainActivity"
+            android:targetPackage="com.gpa.calculator">
+            <extra android:name="open_calc" android:value="cgpa" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_sc_emi"
+        android:shortcutId="static_emi"
+        android:shortcutLongLabel="@string/sc_emi_long"
+        android:shortcutShortLabel="@string/sc_emi">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.gpa.calculator.ui.MainActivity"
+            android:targetPackage="com.gpa.calculator">
+            <extra android:name="open_calc" android:value="emi" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_sc_calc"
+        android:shortcutId="static_basic"
+        android:shortcutLongLabel="@string/sc_calc_long"
+        android:shortcutShortLabel="@string/sc_calc">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.gpa.calculator.ui.MainActivity"
+            android:targetPackage="com.gpa.calculator">
+            <extra android:name="open_calc" android:value="basic" />
+        </intent>
+    </shortcut>
+</shortcuts>

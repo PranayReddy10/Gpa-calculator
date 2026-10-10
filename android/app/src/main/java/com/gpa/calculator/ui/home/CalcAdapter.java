@@ -14,6 +14,7 @@ import com.gpa.calculator.core.Calculator;
 import com.gpa.calculator.databinding.ItemCalcCardBinding;
 import com.gpa.calculator.databinding.ItemFavouriteBinding;
 import com.gpa.calculator.ui.common.Anim;
+import com.gpa.calculator.ui.common.CategoryStyle;
 import com.gpa.calculator.ui.common.Haptics;
 import com.gpa.calculator.ui.common.Icons;
 
@@ -51,10 +52,10 @@ public class CalcAdapter extends ListAdapter<Calculator, CalcAdapter.Holder> {
         LayoutInflater li = LayoutInflater.from(parent.getContext());
         if (listMode) {
             ItemFavouriteBinding b = ItemFavouriteBinding.inflate(li, parent, false);
-            return new Holder(b.getRoot(), b.card, b.icon, b.name, b.desc, b.fav);
+            return new Holder(b.getRoot(), b.card, b.iconBg, b.icon, b.name, b.desc, b.fav);
         }
         ItemCalcCardBinding b = ItemCalcCardBinding.inflate(li, parent, false);
-        return new Holder(b.getRoot(), b.card, b.icon, b.name, b.desc, b.fav);
+        return new Holder(b.getRoot(), b.card, b.iconBg, b.icon, b.name, b.desc, b.fav);
     }
 
     @Override
@@ -63,6 +64,7 @@ public class CalcAdapter extends ListAdapter<Calculator, CalcAdapter.Holder> {
         h.name.setText(c.name());
         h.desc.setText(c.description());
         h.icon.setImageResource(Icons.resolve(h.icon.getContext(), c.icon()));
+        CategoryStyle.applyIcon(h.iconBg, h.icon, c.category());
         bindFav(h, c, false);
         h.card.setOnClickListener(v -> listener.onOpen(c, h.card));
         h.fav.setOnClickListener(v -> {
@@ -86,14 +88,15 @@ public class CalcAdapter extends ListAdapter<Calculator, CalcAdapter.Holder> {
     }
 
     static class Holder extends RecyclerView.ViewHolder {
-        final View card;
+        final View card, iconBg;
         final android.widget.ImageView icon;
         final android.widget.TextView name, desc;
         final android.widget.ImageButton fav;
 
-        Holder(View root, View card, android.widget.ImageView icon, android.widget.TextView name, android.widget.TextView desc, android.widget.ImageButton fav) {
+        Holder(View root, View card, View iconBg, android.widget.ImageView icon, android.widget.TextView name, android.widget.TextView desc, android.widget.ImageButton fav) {
             super(root);
             this.card = card;
+            this.iconBg = iconBg;
             this.icon = icon;
             this.name = name;
             this.desc = desc;

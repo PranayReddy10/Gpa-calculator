@@ -9,9 +9,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 
@@ -21,18 +18,26 @@ import com.gpa.calculator.core.Calculator;
 import com.gpa.calculator.core.CalculatorRegistry;
 import com.gpa.calculator.core.Category;
 import com.gpa.calculator.data.Repository;
+import com.gpa.calculator.data.local.FavouriteEntity;
+import com.gpa.calculator.data.local.HistoryEntity;
 import com.gpa.calculator.databinding.FragmentHomeBinding;
 import com.gpa.calculator.ui.calc.CalcLauncher;
 import com.gpa.calculator.ui.common.Icons;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
     private FragmentHomeBinding b;
-    private CalcAdapter adapter;
+    private HomeAdapter adapter;
     @Nullable private Category category;
     private String query = "";
+    private List<HomeSections.Recent> recents = Collections.emptyList();
+    private List<String> favouriteIds = Collections.emptyList();
+    private boolean firstLayout = true;
 
     @Nullable
     @Override
@@ -43,29 +48,46 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        // Header sits under the status bar: pad it by the inset.
-        final int basePad = b.header.getPaddingTop();
-        ViewCompat.setOnApplyWindowInsetsListener(b.header, (v, insets) -> {
-            Insets sb = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(v.getPaddingLeft(), basePad + sb.top, v.getPaddingRight(), v.getPaddingBottom());
-            return insets;
-        });
+        b.greeting.setText(HomeSections.greeting(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) + " 👋");
+        updateSubtitle();
 
-        adapter = new CalcAdapter(false, new CalcAdapter.Listener() {
-            @Override public void onOpen(Calculator calc, View sharedView) {
-                CalcLauncher.open(requireActivity(), sharedView, calc, null);
+        adapter = new HomeAdapter(new HomeAdapter.Listener() {
+            @Override public void onOpen(Calculator calc, View sharedView, String inputsJson) {
+                CalcLauncher.open(requireActivity(), sharedView, calc, inputsJson);
             }
 
             @Override public void onToggleFavourite(Calculator calc, boolean nowFavourite) {
                 Repository.get(requireContext()).setFavourite(calc.id(), nowFavourite);
             }
+
+            @Override public void onSeeAll(Category c) { selectCategory(c); }
         });
         int span = getResources().getConfiguration().screenWidthDp >= 600 ? 3 : 2;
-        b.grid.setLayoutManager(new GridLayoutManager(requireContext(), span));
+        GridLayoutManager glm = new GridLayoutManager(requireContext(), span);
+        glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override public int getSpanSize(int position) { return adapter.isFullWidth(position) ? span : 1; }
+        });
+        b.grid.setLayoutManager(glm);
         b.grid.setAdapter(adapter);
-        b.grid.setHasFixedSize(true);
 
-        Repository.get(requireContext()).favouriteIds().observe(getViewLifecycleOwner(), ids -> adapter.setFavourites(new HashSet<>(ids)));
+        Repository repo = Repository.get(requireContext());
+        repo.recentHistory().observe(getViewLifecycleOwner(), rows -> {
+            List<HomeSections.Recent> list = new ArrayList<>();
+            for (HistoryEntity e : rows) {
+                Calculator c = CalculatorRegistry.byId(e.calcId);
+                if (c != null) list.add(new HomeSections.Recent(c, e.summary, e.inputsJson, e.createdAt));
+            }
+            recents = list;
+            refresh();
+        });
+        repo.favourites().observe(getViewLifecycleOwner(), favs -> {
+            List<String> ids = new ArrayList<>();
+            for (FavouriteEntity f : favs) ids.add(f.calcId);
+            favouriteIds = ids;
+            adapter.setFavourites(new HashSet<>(ids));
+            updateSubtitle();
+            refresh();
+        });
 
         buildChips();
         b.search.addTextChangedListener(new TextWatcher() {
@@ -74,11 +96,16 @@ public class HomeFragment extends Fragment {
             @Override public void afterTextChanged(Editable s) {
                 query = s.toString();
                 b.searchClear.setVisibility(query.isEmpty() ? View.GONE : View.VISIBLE);
-                refresh(false);
+                refresh();
             }
         });
         b.searchClear.setOnClickListener(v -> b.search.setText(""));
-        refresh(true);
+        refresh();
+    }
+
+    private void updateSubtitle() {
+        if (b == null) return;
+        b.greetingSub.setText(getString(R.string.home_subtitle, CalculatorRegistry.count(), favouriteIds.size()));
     }
 
     private void buildChips() {
@@ -90,8 +117,21 @@ public class HomeFragment extends Fragment {
             if (ids.isEmpty()) return;
             Chip chip = group.findViewById(ids.get(0));
             category = (Category) chip.getTag();
-            refresh(true);
+            b.grid.scrollToPosition(0);
+            refresh();
         });
+    }
+
+    private void selectCategory(Category c) {
+        for (int i = 0; i < b.chips.getChildCount(); i++) {
+            Chip chip = (Chip) b.chips.getChildAt(i);
+            if (chip.getTag() == c) {
+                chip.setChecked(true);
+                b.chipScroll.smoothScrollTo(chip.getLeft() - 32, 0);
+                break;
+            }
+        }
+        b.appBar.setExpanded(true, true);
     }
 
     private Chip chip(String text, @Nullable Category c, int icon) {
@@ -106,12 +146,18 @@ public class HomeFragment extends Fragment {
         return chip;
     }
 
-    private void refresh(boolean animateLayout) {
-        List<Calculator> list = CalculatorRegistry.search(query, category);
-        adapter.submitList(list, () -> {
-            if (animateLayout && b != null) b.grid.scheduleLayoutAnimation();
+    private void refresh() {
+        if (b == null) return;
+        List<HomeSections.Item> items = HomeSections.build(query, category, recents, favouriteIds);
+        boolean noResults = items.size() == 1 && items.get(0).type == HomeSections.Item.Type.SECTION;
+        adapter.submitList(items, () -> {
+            if (b == null) return;
+            if (firstLayout) {
+                firstLayout = false;
+                b.grid.scheduleLayoutAnimation();
+            }
         });
-        b.empty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
+        b.empty.setVisibility(noResults ? View.VISIBLE : View.GONE);
     }
 
     @Override

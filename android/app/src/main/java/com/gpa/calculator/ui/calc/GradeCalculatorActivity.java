@@ -23,7 +23,10 @@ import com.gpa.calculator.core.CalcResult;
 import com.gpa.calculator.core.Fmt;
 import com.gpa.calculator.core.GradeMath;
 import com.gpa.calculator.core.GradeScale;
+import com.gpa.calculator.data.Prefs;
 import com.gpa.calculator.data.Repository;
+import com.gpa.calculator.data.Semesters;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.gpa.calculator.databinding.ActivityGradesBinding;
 import com.gpa.calculator.databinding.ItemGradeRowBinding;
 import com.gpa.calculator.ui.common.Anim;
@@ -52,6 +55,7 @@ public class GradeCalculatorActivity extends CalcActivityBase {
     private RowAdapter adapter;
     private GradeScale scale = GradeScale.TEN_POINT;
     private List<CalcResult> lastResults = new ArrayList<>();
+    private double lastGpa = -1, lastCredits;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,10 +93,17 @@ public class GradeCalculatorActivity extends CalcActivityBase {
         String prefill = getIntent().getStringExtra(CalcLauncher.EXTRA_INPUTS);
         if (prefill != null && restore(prefill)) {
             b.btnCalculate.postDelayed(this::calculate, 450);
+        } else if (mode == Mode.CGPA && loadSavedSemesters()) {
+            int n = rows.size();
+            b.btnCalculate.postDelayed(() -> {
+                calculate();
+                Snackbar.make(b.getRoot(), getString(R.string.semesters_loaded, n), Snackbar.LENGTH_SHORT).show();
+            }, 450);
         } else {
             int n = mode == Mode.CGPA ? 2 : 5;
             for (int i = 0; i < n; i++) rows.add(new Row());
         }
+        setupSemesterButtons();
         adapter.notifyDataSetChanged();
         updateTotalCredits();
 
@@ -160,6 +171,12 @@ public class GradeCalculatorActivity extends CalcActivityBase {
             Haptics.confirm(b.btnCalculate);
             b.scroll.smoothScrollTo(0, 0);
 
+            lastGpa = gpa;
+            lastCredits = totalCredits;
+            if (mode != Mode.CGPA && b.result.btnSaveSemester.getVisibility() != View.VISIBLE) {
+                b.result.btnSaveSemester.setVisibility(View.VISIBLE);
+                Anim.pop(b.result.btnSaveSemester);
+            }
             Repository.get(this).saveHistory(calc, serialise(), lastResults, null);
             afterCalculation();
         } catch (CalcException e) {
@@ -211,6 +228,95 @@ public class GradeCalculatorActivity extends CalcActivityBase {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    // ------------------------------------------------------------------ my semesters (SGPA -> CGPA)
+    private List<Semesters.Semester> savedSemesters() {
+        return Semesters.parse(Prefs.get(this).getString(Semesters.PREF_KEY, null));
+    }
+
+    private void storeSemesters(List<Semesters.Semester> list) {
+        Prefs.get(this).putString(Semesters.PREF_KEY, Semesters.toJson(list));
+    }
+
+    /** CGPA mode: replaces the rows with the saved semesters. */
+    private boolean loadSavedSemesters() {
+        List<Semesters.Semester> list = savedSemesters();
+        if (list.isEmpty()) return false;
+        rows.clear();
+        for (Semesters.Semester s : list) {
+            Row r = new Row();
+            r.name = s.name;
+            r.credits = Fmt.fmt(s.credits, 2).replace(",", "");
+            r.value = Fmt.fmt(s.sgpa, 2).replace(",", "");
+            rows.add(r);
+        }
+        return true;
+    }
+
+    private void setupSemesterButtons() {
+        b.result.btnSaveSemester.setOnClickListener(v -> promptSaveSemester());
+        refreshSavedButton();
+        b.btnSavedSemesters.setOnClickListener(v -> new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.semesters_button, savedSemesters().size()))
+                .setItems(new CharSequence[]{getString(R.string.semesters_reload), getString(R.string.semesters_clear)}, (d, which) -> {
+                    if (which == 0) {
+                        if (loadSavedSemesters()) {
+                            adapter.notifyDataSetChanged();
+                            updateTotalCredits();
+                            calculate();
+                        }
+                    } else {
+                        storeSemesters(new ArrayList<>());
+                        refreshSavedButton();
+                        Snackbar.make(b.getRoot(), R.string.semesters_cleared, Snackbar.LENGTH_SHORT).show();
+                    }
+                })
+                .show());
+    }
+
+    private void refreshSavedButton() {
+        int n = savedSemesters().size();
+        b.btnSavedSemesters.setVisibility(mode == Mode.CGPA && n > 0 ? View.VISIBLE : View.GONE);
+        b.btnSavedSemesters.setText(getString(R.string.semesters_button, n));
+    }
+
+    private void promptSaveSemester() {
+        if (lastGpa < 0) return;
+        List<Semesters.Semester> list = savedSemesters();
+        com.google.android.material.textfield.TextInputLayout til = new com.google.android.material.textfield.TextInputLayout(this);
+        com.google.android.material.textfield.TextInputEditText et = new com.google.android.material.textfield.TextInputEditText(til.getContext());
+        et.setText(Semesters.nextName(list));
+        et.setSelectAllOnFocus(true);
+        til.setHint(getString(R.string.semester_save_hint));
+        til.addView(et);
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        android.widget.FrameLayout box = new android.widget.FrameLayout(this);
+        box.setPadding(pad, pad / 2, pad, 0);
+        box.addView(til);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.semester_save_title)
+                .setMessage("SGPA " + Fmt.fmt(lastGpa, 2) + " · " + Fmt.fmt(lastCredits, 2) + " credits")
+                .setView(box)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.save, (d, w) -> {
+                    String name = et.getText() == null ? "" : et.getText().toString().trim();
+                    if (name.isEmpty()) name = Semesters.nextName(list);
+                    storeSemesters(Semesters.upsert(list, new Semesters.Semester(name, lastGpa, lastCredits)));
+                    Haptics.confirm(b.result.btnSaveSemester);
+                    com.gpa.calculator.data.remote.Analytics.get(this).log("semester_saved");
+                    com.gpa.calculator.core.Calculator cgpa = com.gpa.calculator.core.CalculatorRegistry.byId("cgpa");
+                    Snackbar.make(b.getRoot(), getString(R.string.semester_saved, name, Fmt.fmt(lastGpa, 2)), Snackbar.LENGTH_LONG)
+                            .setAction(R.string.semester_open_cgpa, x -> { if (cgpa != null) CalcLauncher.open(this, null, cgpa, null, false); })
+                            .show();
+                })
+                .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (b != null) refreshSavedButton();
     }
 
     @Override
