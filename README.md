@@ -1,7 +1,7 @@
 # GPA Calculator 2.0 — Android app + admin backend
 
 Complete rebuild of the Play Store app `com.gpa.calculator` with a Material 3 UI, animations,
-47 calculators, three ad networks controlled from an admin panel, cloud-saved history and
+51 calculators, three ad networks controlled from an admin panel, cloud-saved history and
 self-hosted usage analytics.
 
 ```
@@ -11,7 +11,7 @@ backend/   PHP 7.4+/8.x + MySQL API and admin panel for shared hosting (cPanel f
 
 ## What the app includes
 
-**Calculators (47)**
+**Calculators (51)**
 
 | Category | Calculators |
 |---|---|
