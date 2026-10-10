@@ -19,7 +19,8 @@ public class RemoteConfig {
         public boolean test_mode = true;
         /** Order in which networks are tried: "admob", "max", "meta". */
         public List<String> priority = new ArrayList<>(Arrays.asList("admob", "max", "meta"));
-        public Network admob = new Network();
+        /** AdMob is on by default so ads work even before the first config download. */
+        public Network admob = Network.enabledByDefault();
         public Network max = new Network();
         public Network meta = new Network();
         public boolean banner_enabled = true;
@@ -62,6 +63,12 @@ public class RemoteConfig {
         public String app_open = "";
         public String rewarded = "";
         public String native_ad = "";
+
+        static Network enabledByDefault() {
+            Network n = new Network();
+            n.enabled = true;
+            return n;
+        }
     }
 
     public static class App {

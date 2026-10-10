@@ -27,7 +27,7 @@ import okhttp3.Response;
 
 /** Minimal JSON client for the PHP backend in /backend. All callbacks run on the main thread. */
 public final class ApiClient {
-    private static final String TAG = "ApiClient";
+    private static final String TAG = "GPAApi";
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static ApiClient instance;
 
