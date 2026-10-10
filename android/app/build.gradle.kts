@@ -11,8 +11,11 @@ val localProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
+// .properties files have no end-of-line comments, so "VERSION_CODE=14   # note" would read the note
+// as part of the value. Drop anything after whitespace + '#'.
 fun setting(name: String, default: String): String =
-    (project.findProperty(name)?.toString() ?: localProps.getProperty(name) ?: default).trim()
+    (project.findProperty(name)?.toString() ?: localProps.getProperty(name) ?: default)
+        .replace(Regex("""\s+#.*$"""), "").trim()
 
 // The Google Mobile Ads SDK crashes at app start on a malformed app ID, so never ship one:
 // anything that is not "ca-app-pub-<digits>~<digits>" (placeholder, empty, an ad UNIT id with "/")
@@ -65,7 +68,9 @@ android {
         targetSdk = 36
         // Must be higher than the versionCode currently live on Google Play (Play Console >
         // App bundle explorer). Override per release in local.properties: VERSION_CODE / VERSION_NAME.
-        versionCode = setting("VERSION_CODE", "100").toInt()
+        versionCode = setting("VERSION_CODE", "100").let {
+            it.toIntOrNull() ?: throw GradleException("VERSION_CODE must be a whole number (e.g. VERSION_CODE=15), got '$it'.")
+        }
         versionName = setting("VERSION_NAME", "2.0.0")
 
         // --- Build-time configuration: set these in android/local.properties (see local.properties.sample) ---

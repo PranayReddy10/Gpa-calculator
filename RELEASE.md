@@ -55,11 +55,15 @@ Never commit the keystore or its passwords.
 ```
 API_BASE_URL=https://gpa.jntubooks.in/
 APP_API_KEY=<same as backend config.php>
-ADMOB_APP_ID=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY   # AdMob > Apps > App settings
-APPLOVIN_SDK_KEY=                                     # optional
-ONESIGNAL_APP_ID=                                     # optional (admin panel can set it)
+# AdMob > Apps > App settings
+ADMOB_APP_ID=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
+# optional
+APPLOVIN_SDK_KEY=
+# optional (the admin panel can set it)
+ONESIGNAL_APP_ID=
 
-VERSION_CODE=100        # must be higher than the version code live on Play
+# must be higher than the version code live on Play
+VERSION_CODE=100
 VERSION_NAME=2.0.0
 
 RELEASE_STORE_FILE=/path/to/upload-key.jks
@@ -69,6 +73,7 @@ RELEASE_KEY_PASSWORD=...
 ```
 
 Find the current version code in Play Console > **App bundle explorer**. Use any higher number.
+Put comments on their own line starting with `#`. A `.properties` file has no end-of-line comments.
 
 The release build **refuses to build** if the AdMob ID is the test ID or a placeholder, the API key
 is the default, the URL is not https, or the keystore is missing. Fix whatever it lists.
