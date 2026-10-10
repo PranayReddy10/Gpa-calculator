@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="NativeAd.Badge">
+    <style name="NativeAd.Badge" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/bg_ad_badge</item>
@@ -13,7 +13,7 @@
         <item name="android:textSize">11sp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
-    <style name="NativeAd.Headline">
+    <style name="NativeAd.Headline" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:ellipsize">end</item>
@@ -22,7 +22,7 @@
         <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="android:textSize">15sp</item>
     </style>
-    <style name="NativeAd.Advertiser">
+    <style name="NativeAd.Advertiser" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:ellipsize">end</item>
@@ -30,7 +30,7 @@
         <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
         <item name="android:textSize">12sp</item>
     </style>
-    <style name="NativeAd.Body">
+    <style name="NativeAd.Body" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginTop">10dp</item>
