@@ -1,7 +1,7 @@
 # GPA Calculator 2.0 — Android app + admin backend
 
 Complete rebuild of the Play Store app `com.gpa.calculator` with a Material 3 UI, animations,
-51 calculators, three ad networks controlled from an admin panel, cloud-saved history and
+53 calculators, three ad networks controlled from an admin panel, cloud-saved history and
 self-hosted usage analytics.
 
 ```
@@ -11,15 +11,15 @@ backend/   PHP 7.4+/8.x + MySQL API and admin panel for shared hosting (cPanel f
 
 ## What the app includes
 
-**Calculators (51)**
+**Calculators (53)**
 
 | Category | Calculators |
 |---|---|
 | Tools | Standard keypad calculator (live result, brackets, %), Currency converter (USD/INR/EUR/GBP/AED and 30+ more, live ECB rates cached for offline, feed URL set in admin panel) |
 | Percentage | Marks %, Ratio to %, General % (3 modes), Change in %, Discount (stacked + tax), % Difference, Marks needed |
 | Academic | SGPA, SGPA with Grade (4 grade scales), CGPA, GPA → %, % → GPA, CGPA → % (CBSE/VTU/JNTU), % → CGPA, GPA scale converter, Final exam grade needed, Attendance (bunk/attend), Grade from marks |
-| Finance | EMI with full amortisation schedule + chart, Simple interest, Compound interest, SIP, Lumpsum, FD, RD, Tax/GST (add/remove, CGST/SGST), Tip & split, Profit/Loss, Inflation, ROI/CAGR, Salary breakdown, Loan eligibility |
-| Everyday | Age, Date difference, Days until, BMI, Calories (BMR/TDEE), Fuel cost, Electricity cost, Speed·Distance·Time, Average & statistics |
+| Finance | EMI with full amortisation schedule + chart, Simple interest, Compound interest, SIP, Lumpsum, FD, RD, Tax/GST (add/remove, CGST/SGST), Tip & split, Profit/Loss, Inflation, ROI/CAGR, Salary breakdown, Loan eligibility, Loan comparison (two offers incl. processing fee) |
+| Everyday | Age, Date difference, Days until, BMI, Calories (BMR/TDEE), Fuel cost, Electricity cost, Speed·Distance·Time, Average & statistics, Unit price (best value across up to 3 pack sizes, g/kg/oz/lb/ml/L/fl oz/pcs) |
 | Converters | Length, Weight, Area, Volume, Speed, Data size, Time, Temperature |
 
 **UI / animations**: Material 3 with dynamic colour option, light/dark/system theme, AndroidX
@@ -33,9 +33,11 @@ calculator, copy / share result as image, search + category chips, in-app review
 in-app update + forced update, remote announcements, rewarded "remove ads for N minutes".
 
 **Ads** (all switched from the admin panel): Google AdMob, AppLovin MAX, Meta Audience
-Network. Priority/waterfall order, per-network unit IDs, banner/interstitial/app-open/rewarded
-toggles, frequency caps, test mode, placements. Google UMP consent is gathered before any
-request.
+Network. Formats: banner, native (an ad card in every calculator screen, compact on the keypad
+calculator), interstitial (after N calculations, when opening a calculator every N opens, and
+optionally when leaving one), app open and rewarded. Priority/waterfall order, per-network unit
+IDs, per-format and per-placement toggles, frequency caps and test mode are all remote. Google
+UMP consent is gathered before any request.
 
 **Analytics** (own backend, no third-party SDK): installs, DAU/WAU/MAU, online now, top
 calculators, ad impressions by network, versions, countries, device models, 30-day charts.

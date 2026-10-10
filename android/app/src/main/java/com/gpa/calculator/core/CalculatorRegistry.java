@@ -1,6 +1,7 @@
 package com.gpa.calculator.core;
 
 import com.gpa.calculator.core.calculators.AcademicCalculators;
+import com.gpa.calculator.core.calculators.CompareCalculators;
 import com.gpa.calculator.core.calculators.ConverterCalculators;
 import com.gpa.calculator.core.calculators.EverydayCalculators;
 import com.gpa.calculator.core.calculators.FinanceCalculators;
@@ -24,7 +25,9 @@ public final class CalculatorRegistry {
         list.addAll(PercentageCalculators.all());
         list.addAll(AcademicCalculators.all());
         list.addAll(FinanceCalculators.all());
+        list.add(new CompareCalculators.LoanCompare());
         list.addAll(EverydayCalculators.all());
+        list.add(new CompareCalculators.UnitPrice());
         list.add(ToolCalculators.currency());
         list.addAll(ConverterCalculators.all());
         for (Calculator c : list) {

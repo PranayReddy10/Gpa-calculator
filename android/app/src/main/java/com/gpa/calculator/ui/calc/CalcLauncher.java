@@ -7,6 +7,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.gpa.calculator.ads.AdsManager;
 import com.gpa.calculator.core.Calculator;
 import com.gpa.calculator.data.remote.Analytics;
 
@@ -30,11 +31,14 @@ public final class CalcLauncher {
         Intent i = new Intent(activity, target).putExtra(EXTRA_ID, calc.id());
         if (inputsJson != null) i.putExtra(EXTRA_INPUTS, inputsJson);
         Analytics.get(activity).log("calc_open", "calc", calc.id());
-        if (sharedView != null) {
-            ActivityOptions o = ActivityOptions.makeSceneTransitionAnimation(activity, sharedView, SHARED_NAME);
-            activity.startActivity(i, o.toBundle());
-        } else {
-            activity.startActivity(i);
-        }
+        AdsManager.get(activity).onCalculatorOpen(activity, () -> {
+            if (activity.isFinishing() || activity.isDestroyed()) return;
+            if (sharedView != null && sharedView.isAttachedToWindow()) {
+                ActivityOptions o = ActivityOptions.makeSceneTransitionAnimation(activity, sharedView, SHARED_NAME);
+                activity.startActivity(i, o.toBundle());
+            } else {
+                activity.startActivity(i);
+            }
+        });
     }
 }

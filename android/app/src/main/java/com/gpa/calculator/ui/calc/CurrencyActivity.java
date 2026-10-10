@@ -87,6 +87,7 @@ public class CurrencyActivity extends CalcActivityBase {
         convert();
         load(false);
         attachBanner(b.adContainer);
+        attachNative(b.nativeContainer, false);
     }
 
     private void load(boolean force) {

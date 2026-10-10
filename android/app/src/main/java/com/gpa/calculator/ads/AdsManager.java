@@ -45,6 +45,7 @@ public final class AdsManager implements ConfigStore.Listener {
     private long lastAppOpenAt;
     private boolean fullScreenShowing;
     private int calcsSinceInterstitial;
+    private int opensSinceInterstitial;
     @Nullable private Activity currentActivity;
 
     private AdsManager(Context c) {
@@ -200,20 +201,39 @@ public final class AdsManager implements ConfigStore.Listener {
         });
     }
 
-    /**
-     * Call after every completed calculation. Shows an interstitial when the frequency cap from the
-     * admin panel is reached and enough time has passed.
-     */
+    /** Call after every completed calculation (frequency from the admin panel). */
     public void onCalculation(Activity activity, @Nullable Runnable after) {
         calcsSinceInterstitial++;
         RemoteConfig.Ads ads = cfg();
+        boolean due = ads.interstitial_after_calc && calcsSinceInterstitial >= Math.max(1, ads.interstitial_every_n_calcs);
+        showInterstitialIfDue(due, activity, "after_calc", after);
+    }
+
+    /** Call when the user taps a calculator; {@code after} opens the screen (runs after the ad, or immediately). */
+    public void onCalculatorOpen(Activity activity, Runnable after) {
+        opensSinceInterstitial++;
+        RemoteConfig.Ads ads = cfg();
+        boolean due = ads.interstitial_on_open && opensSinceInterstitial >= Math.max(1, ads.interstitial_open_every_n);
+        showInterstitialIfDue(due, activity, "calc_open", after);
+    }
+
+    /** Call when the user leaves a calculator; {@code after} finishes the screen. */
+    public void onCalculatorExit(Activity activity, Runnable after) {
+        showInterstitialIfDue(cfg().interstitial_on_exit, activity, "calc_exit", after);
+    }
+
+    /**
+     * Shared gate for every interstitial trigger: master switch, ad-free reward, min interval,
+     * first-install grace period and "nothing else full-screen right now". Runs {@code after} exactly once.
+     */
+    private void showInterstitialIfDue(boolean due, Activity activity, String trigger, @Nullable Runnable after) {
+        RemoteConfig.Ads ads = cfg();
         long now = System.currentTimeMillis();
-        boolean due = adsAllowed() && ads.interstitial_enabled
-                && calcsSinceInterstitial >= Math.max(1, ads.interstitial_every_n_calcs)
+        boolean ok = due && adsAllowed() && ads.interstitial_enabled
                 && now - lastInterstitialAt >= ads.interstitial_min_interval_sec * 1000L
                 && now - Prefs.get(app).firstOpenAt() >= ads.first_interstitial_delay_sec * 1000L
-                && !fullScreenShowing;
-        if (!due) {
+                && !fullScreenShowing && !activity.isFinishing();
+        if (!ok) {
             if (after != null) after.run();
             return;
         }
@@ -225,7 +245,8 @@ public final class AdsManager implements ConfigStore.Listener {
                         fullScreenShowing = false;
                         lastInterstitialAt = System.currentTimeMillis();
                         calcsSinceInterstitial = 0;
-                        Analytics.get(app).log("ad_impression", "network", p.name(), "format", "interstitial");
+                        opensSinceInterstitial = 0;
+                        Analytics.get(app).log("ad_impression", "network", p.name(), "format", "interstitial_" + trigger);
                         preloadInterstitial(p);
                         if (after != null) after.run();
                     }
@@ -241,6 +262,61 @@ public final class AdsManager implements ConfigStore.Listener {
             preloadInterstitial(p);
         }
         if (after != null) after.run();
+    }
+
+    // ------------------------------------------------------------------ native
+    public static final class NativeHandle {
+        AdProvider provider;
+        View view;
+        boolean cancelled;
+
+        public void destroy() {
+            cancelled = true;
+            if (provider != null && view != null) {
+                ViewGroup parent = (ViewGroup) view.getParent();
+                if (parent != null) parent.removeView(view);
+                provider.destroyNative(view);
+            }
+            view = null;
+        }
+    }
+
+    /**
+     * Loads a native ad (our own card layout) into {@code container}, walking the networks in the
+     * admin-panel priority order. The container stays hidden unless an ad loads.
+     */
+    public NativeHandle attachNative(Activity activity, ViewGroup container, String placement, boolean compact) {
+        NativeHandle handle = new NativeHandle();
+        container.setVisibility(View.GONE);
+        RemoteConfig.Ads ads = cfg();
+        if (!adsAllowed() || !ads.native_enabled || !ads.native_in_calculators) return handle;
+        tryNative(activity, container, ordered(), 0, handle, placement, compact);
+        return handle;
+    }
+
+    private void tryNative(Activity activity, ViewGroup container, List<AdProvider> list, int idx, NativeHandle handle, String placement, boolean compact) {
+        if (handle.cancelled || activity.isFinishing() || activity.isDestroyed() || idx >= list.size()) return;
+        AdProvider p = list.get(idx);
+        p.loadNative(activity, container, compact, new AdProvider.NativeCallback() {
+            @Override public void onLoaded(View adView) {
+                if (handle.cancelled || activity.isDestroyed()) { p.destroyNative(adView); return; }
+                container.removeAllViews();
+                container.addView(adView);
+                container.setVisibility(View.VISIBLE);
+                container.setAlpha(0f);
+                container.setTranslationY(24 * activity.getResources().getDisplayMetrics().density);
+                container.animate().alpha(1f).translationY(0f).setDuration(380)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator(2f)).start();
+                handle.provider = p;
+                handle.view = adView;
+                Analytics.get(app).log("ad_impression", "network", p.name(), "format", (compact ? "native_small_" : "native_") + placement);
+            }
+
+            @Override public void onFailed(String reason) {
+                Log.i(TAG, p.name() + " native failed: " + reason);
+                tryNative(activity, container, list, idx + 1, handle, placement, compact);
+            }
+        });
     }
 
     // ------------------------------------------------------------------ app open

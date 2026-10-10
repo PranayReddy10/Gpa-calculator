@@ -10,12 +10,18 @@ import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
 import com.facebook.ads.AdListener;
 import com.facebook.ads.AdSettings;
+import com.facebook.ads.AdOptionsView;
 import com.facebook.ads.AdSize;
+import com.facebook.ads.MediaView;
+import com.facebook.ads.NativeAd;
+import com.facebook.ads.NativeAdLayout;
+import com.facebook.ads.NativeAdListener;
 import com.facebook.ads.AudienceNetworkAds;
 import com.facebook.ads.InterstitialAd;
 import com.facebook.ads.InterstitialAdListener;
 import com.facebook.ads.RewardedVideoAd;
 import com.facebook.ads.RewardedVideoAdListener;
+import com.gpa.calculator.R;
 import com.gpa.calculator.data.remote.model.RemoteConfig;
 
 /** Meta (Facebook) Audience Network. No app-open format, so it is skipped for that slot. */
@@ -143,5 +149,70 @@ public final class MetaProvider implements AdProvider {
         if (!isRewardedReady()) { cb.onFailed("not loaded"); return; }
         rewardCb = cb;
         rewarded.show();
+    }
+
+    // ---------------------------------------------------------------- native
+    /** Meta requires its media view on native ads, so the compact slot falls through to the next network. */
+    @Override
+    public void loadNative(Activity activity, ViewGroup container, boolean compact, NativeCallback cb) {
+        if (!has(cfg.native_ad)) { cb.onFailed("no native placement"); return; }
+        if (compact) { cb.onFailed("compact native not supported"); return; }
+        NativeAd ad = new NativeAd(activity, cfg.native_ad);
+        ad.loadAd(ad.buildLoadAdConfig().withAdListener(new NativeAdListener() {
+            @Override public void onMediaDownloaded(Ad a) {}
+
+            @Override public void onError(Ad a, AdError e) {
+                ad.destroy();
+                cb.onFailed(e.getErrorMessage());
+            }
+
+            @Override public void onAdLoaded(Ad a) {
+                if (activity.isFinishing() || activity.isDestroyed() || ad != a) {
+                    ad.destroy();
+                    return;
+                }
+                NativeAdLayout layout = new NativeAdLayout(activity);
+                View content = android.view.LayoutInflater.from(activity).inflate(R.layout.native_ad_meta, layout, false);
+                layout.addView(content);
+                ad.unregisterView();
+
+                android.widget.TextView headline = content.findViewById(R.id.ad_headline);
+                android.widget.TextView advertiser = content.findViewById(R.id.ad_advertiser);
+                android.widget.TextView sponsored = content.findViewById(R.id.ad_sponsored);
+                android.widget.TextView body = content.findViewById(R.id.ad_body);
+                android.widget.Button cta = content.findViewById(R.id.ad_cta);
+                MediaView icon = content.findViewById(R.id.ad_icon);
+                MediaView media = content.findViewById(R.id.ad_media);
+                android.widget.LinearLayout options = content.findViewById(R.id.ad_options);
+
+                headline.setText(ad.getAdvertiserName());
+                advertiser.setText(ad.getAdSocialContext());
+                sponsored.setText(ad.getSponsoredTranslation());
+                body.setText(ad.getAdBodyText());
+                cta.setVisibility(ad.hasCallToAction() ? View.VISIBLE : View.INVISIBLE);
+                cta.setText(ad.getAdCallToAction());
+                options.removeAllViews();
+                options.addView(new AdOptionsView(activity, ad, layout), 0);
+
+                java.util.List<View> clickable = new java.util.ArrayList<>();
+                clickable.add(headline);
+                clickable.add(cta);
+                ad.registerViewForInteraction(content, media, icon, clickable);
+                layout.setTag(R.id.native_ad_tag, ad);
+                cb.onLoaded(layout);
+            }
+
+            @Override public void onAdClicked(Ad a) {}
+            @Override public void onLoggingImpression(Ad a) {}
+        }).build());
+    }
+
+    @Override
+    public void destroyNative(View adView) {
+        Object tag = adView.getTag(R.id.native_ad_tag);
+        if (tag instanceof NativeAd) {
+            ((NativeAd) tag).unregisterView();
+            ((NativeAd) tag).destroy();
+        }
     }
 }

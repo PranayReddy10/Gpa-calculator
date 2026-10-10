@@ -23,6 +23,12 @@ final class AppConfig
                 'interstitial_enabled' => true,
                 'app_open_enabled' => true,
                 'rewarded_enabled' => true,
+                'native_enabled' => true,
+                'native_in_calculators' => true,
+                'interstitial_after_calc' => true,
+                'interstitial_on_open' => true,
+                'interstitial_open_every_n' => 3,
+                'interstitial_on_exit' => false,
                 'interstitial_every_n_calcs' => 3,
                 'interstitial_min_interval_sec' => 60,
                 'app_open_min_interval_sec' => 240,
@@ -106,6 +112,7 @@ final class AppConfig
             throw new HttpException(422, 'Duplicate network in priority list');
         }
         if ($cfg['ads']['interstitial_every_n_calcs'] < 1) throw new HttpException(422, 'interstitial_every_n_calcs must be >= 1');
+        if ($cfg['ads']['interstitial_open_every_n'] < 1) throw new HttpException(422, 'interstitial_open_every_n must be >= 1');
         foreach (['interstitial_min_interval_sec', 'app_open_min_interval_sec', 'first_interstitial_delay_sec', 'reward_ad_free_minutes', 'rate_prompt_after_calcs'] as $k) {
             $v = $cfg['ads'][$k] ?? $cfg['features'][$k] ?? 0;
             if ($v < 0) throw new HttpException(422, "$k must be >= 0");

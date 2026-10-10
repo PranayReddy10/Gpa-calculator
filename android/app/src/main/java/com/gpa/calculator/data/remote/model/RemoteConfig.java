@@ -26,6 +26,14 @@ public class RemoteConfig {
         public boolean interstitial_enabled = true;
         public boolean app_open_enabled = true;
         public boolean rewarded_enabled = true;
+        public boolean native_enabled = true;
+        /** Native ad card on every calculator screen. */
+        public boolean native_in_calculators = true;
+        /** Interstitial triggers (all still respect interstitial_enabled + min interval). */
+        public boolean interstitial_after_calc = true;
+        public boolean interstitial_on_open = true;
+        public int interstitial_open_every_n = 3;
+        public boolean interstitial_on_exit = false;
         public int interstitial_every_n_calcs = 3;
         public int interstitial_min_interval_sec = 60;
         public int app_open_min_interval_sec = 240;

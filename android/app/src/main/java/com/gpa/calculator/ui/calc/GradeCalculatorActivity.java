@@ -106,6 +106,7 @@ public class GradeCalculatorActivity extends CalcActivityBase {
         b.result.btnCopy.setOnClickListener(v -> ShareUtil.copy(b.getRoot(), ShareUtil.resultsAsText(calc.name(), lastResults)));
         b.result.btnShare.setOnClickListener(v -> ShareUtil.shareViewAsImage(this, b.result.getRoot(), ShareUtil.resultsAsText(calc.name(), lastResults)));
         attachBanner(b.adContainer);
+        attachNative(b.nativeContainer, false);
     }
 
     private void updateTotalCredits() {
