@@ -6,8 +6,9 @@
 API_BASE_URL=https://gpa.jntubooks.in/
 # Must be exactly the same as APP_API_KEY in backend/config.php
 APP_API_KEY=paste-the-same-random-value-here
-# AdMob app ID from AdMob > Apps > App settings (contains a ~). Leave out to use Google's test ID.
-ADMOB_APP_ID=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
+# AdMob app ID from AdMob > Apps > App settings (has a ~, not a /). Remove the # only when you
+# paste your real ID; until then Google's test ID is used automatically.
+#ADMOB_APP_ID=ca-app-pub-1234567890123456~1234567890
 # Optional: AppLovin MAX SDK key. Leave empty to turn MAX off.
 APPLOVIN_SDK_KEY=
 # Optional: OneSignal app ID (can also be set in the admin panel App tab)

@@ -14,6 +14,18 @@ val localProps = Properties().apply {
 fun setting(name: String, default: String): String =
     (project.findProperty(name)?.toString() ?: localProps.getProperty(name) ?: default).trim()
 
+// The Google Mobile Ads SDK crashes at app start on a malformed app ID, so never ship one:
+// anything that is not "ca-app-pub-<digits>~<digits>" (placeholder, empty, an ad UNIT id with "/")
+// falls back to Google's official test app ID with a build warning.
+val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+val admobAppId: String = setting("ADMOB_APP_ID", "").let { id ->
+    if (Regex("""^ca-app-pub-\d{16}~\d{10}$""").matches(id)) id
+    else {
+        if (id.isNotEmpty()) logger.warn("w: ADMOB_APP_ID '$id' is not a valid AdMob app ID (ca-app-pub-<16 digits>~<10 digits>). Using Google's test app ID instead.")
+        admobTestAppId
+    }
+}
+
 android {
     namespace = "com.gpa.calculator"
     compileSdk = 36
@@ -33,7 +45,7 @@ android {
         // Shared secret that must match APP_API_KEY in backend/config.php
         buildConfigField("String", "APP_API_KEY", "\"${setting("APP_API_KEY", "change-me-app-key")}\"")
         // AdMob application ID (NOT an ad unit). Google test app id by default.
-        manifestPlaceholders["admobAppId"] = setting("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+        manifestPlaceholders["admobAppId"] = admobAppId
         // OneSignal app ID (public). Can also be set/overridden from the admin panel (App tab).
         buildConfigField("String", "ONESIGNAL_APP_ID", "\"${setting("ONESIGNAL_APP_ID", "")}\"")
         // AppLovin MAX SDK key (leave empty to disable MAX entirely)
