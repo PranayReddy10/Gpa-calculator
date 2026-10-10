@@ -42,7 +42,13 @@ final class AppConfig
                 'latest_version_code' => 0,
                 'force_update_below' => 0,
                 'update_message' => 'A new version is available with new features and fixes.',
-                'announcement' => ['enabled' => false, 'id' => '', 'title' => '', 'body' => '', 'url' => '', 'button' => 'OK'],
+                'popup' => [
+                    'enabled' => false, 'id' => '', 'title' => '', 'body' => '', 'image_url' => '',
+                    'primary_label' => 'OK', 'primary_action' => 'dismiss', 'primary_value' => '', 'secondary_label' => '',
+                    'frequency' => 'once', 'audience' => 'all', 'delay_sec' => 3,
+                    'min_version_code' => 0, 'max_version_code' => 0, 'start_date' => '', 'end_date' => '',
+                ],
+                'onesignal_app_id' => '',
                 'privacy_url' => '',
                 'terms_url' => '',
                 'contact_email' => '',
@@ -56,6 +62,10 @@ final class AppConfig
                 'rate_prompt_after_calcs' => 8,
                 'in_app_update' => true,
                 'currency_api_url' => 'https://api.frankfurter.app/latest',
+                'push_enabled' => true,
+                'push_prompt_enabled' => true,
+                'push_prompt_after_opens' => 2,
+                'in_app_messages' => true,
             ],
         ];
     }
@@ -113,6 +123,17 @@ final class AppConfig
         }
         if ($cfg['ads']['interstitial_every_n_calcs'] < 1) throw new HttpException(422, 'interstitial_every_n_calcs must be >= 1');
         if ($cfg['ads']['interstitial_open_every_n'] < 1) throw new HttpException(422, 'interstitial_open_every_n must be >= 1');
+        $p = $cfg['app']['popup'];
+        if (!in_array($p['primary_action'], ['dismiss', 'url', 'calculator', 'rate', 'share', 'update', 'notifications'], true)) throw new HttpException(422, 'Unknown pop-up action: ' . $p['primary_action']);
+        if (!in_array($p['frequency'], ['once', 'daily', 'every_open'], true)) throw new HttpException(422, 'Unknown pop-up frequency: ' . $p['frequency']);
+        if (!in_array($p['audience'], ['all', 'new', 'returning'], true)) throw new HttpException(422, 'Unknown pop-up audience: ' . $p['audience']);
+        foreach (['start_date', 'end_date'] as $k) {
+            if ($p[$k] !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $p[$k])) throw new HttpException(422, "Pop-up $k must be YYYY-MM-DD");
+        }
+        if ($p['enabled'] && $p['id'] === '') throw new HttpException(422, 'Give the pop-up an id (change it to show the pop-up again)');
+        if ($p['primary_action'] === 'url' && $p['enabled'] && !preg_match('#^https?://#', $p['primary_value'])) throw new HttpException(422, 'Pop-up button URL must start with http:// or https://');
+        $os = $cfg['app']['onesignal_app_id'];
+        if ($os !== '' && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $os)) throw new HttpException(422, 'OneSignal app ID must look like xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx');
         foreach (['interstitial_min_interval_sec', 'app_open_min_interval_sec', 'first_interstitial_delay_sec', 'reward_ad_free_minutes', 'rate_prompt_after_calcs'] as $k) {
             $v = $cfg['ads'][$k] ?? $cfg['features'][$k] ?? 0;
             if ($v < 0) throw new HttpException(422, "$k must be >= 0");

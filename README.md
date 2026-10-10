@@ -30,7 +30,17 @@ validation shake, haptics, edge-to-edge.
 
 **Features**: favourites, history with cloud backup/restore (MySQL), recent inputs per
 calculator, copy / share result as image, search + category chips, in-app review prompt,
-in-app update + forced update, remote announcements, rewarded "remove ads for N minutes".
+in-app update + forced update, rewarded "remove ads for N minutes".
+
+**Push notifications (OneSignal)**: friendly "turn on notifications" pop-up before Android's
+permission dialog (after N opens, max 3 times, a week apart), Settings switch, taps deep-link
+straight into a calculator or open a link, users tagged with app version / usage for
+segments, OneSignal in-app messages on/off from the admin panel. Send pushes from the admin
+panel's Notifications tab (segment, one test device, image, schedule, history).
+
+**Pop-up campaigns**: image + title + message + buttons (open link, open calculator, rate,
+share, update, ask for notifications). Rules: once / daily / every open, new or returning
+users, date window, app version range, delay. One pop-up per session, never over an ad.
 
 **Ads** (all switched from the admin panel): Google AdMob, AppLovin MAX, Meta Audience
 Network. Formats: banner, native (an ad card in every calculator screen, compact on the keypad
@@ -52,6 +62,7 @@ calculators, ad impressions by network, versions, countries, device models, 30-d
    APP_API_KEY=<same value as APP_API_KEY in backend/config.php>
    ADMOB_APP_ID=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
    APPLOVIN_SDK_KEY=<optional, leave unset to disable MAX>
+   ONESIGNAL_APP_ID=<optional, can also be set in the admin panel App tab>
    ```
    Without them the app runs with Google test ads and the backend disabled.
 3. `./gradlew testDebugUnitTest` runs the calculator engine tests (21 tests).
@@ -71,6 +82,10 @@ about ads (unit IDs, on/off, order, frequency) is remote.
    the admin user), then **delete `setup.php`**.
 5. Admin panel: `https://yourdomain.com/gpa-api/admin/`.
 6. In the Ads tab: enter unit IDs, set priority, turn **Test mode off** when going live.
+7. Push: create a OneSignal app (Android, with your Firebase server key / service account as
+   OneSignal asks), put the **App API key** in `ONESIGNAL_API_KEY` in `config.php` and the
+   **App ID** in the admin App tab. The PHP `curl` extension must be enabled (it is on almost
+   every host).
 
 Requirements: PHP 7.4+ with PDO MySQL, Apache mod_rewrite (`.htaccess` included; if rewrite
 is unavailable the app URL can use `index.php?route=/api/v1/config`).
@@ -87,6 +102,7 @@ is unavailable the app URL can use `index.php?route=/api/v1/config`).
 | GET/PUT | `/api/v1/admin/config` | admin | Read / write remote config |
 | GET | `/api/v1/admin/stats` | admin | Dashboard numbers and series |
 | GET | `/api/v1/admin/devices`, `/events` | admin | Raw lists |
+| GET/POST | `/api/v1/admin/push`, `/admin/push/status` | admin | Send push via OneSignal, history |
 
 Run the backend test locally: `php backend/tests/smoke.php` (uses SQLite, no MySQL needed).
 

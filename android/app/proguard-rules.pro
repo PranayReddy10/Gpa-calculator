@@ -25,3 +25,6 @@
 # Google Mobile Ads
 -keep class com.google.android.gms.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
+
+# OneSignal ships its own consumer rules; keep notification payload models used via reflection
+-dontwarn com.onesignal.**

@@ -125,6 +125,7 @@ public abstract class CalcActivityBase extends BaseActivity {
     protected void afterCalculation() {
         Prefs.get(this).incrementCalcCount();
         Analytics.get(this).log("calc_used", "calc", calc.id());
+        com.gpa.calculator.push.PushManager.tagCalculation(this, calc.id());
         AdsManager.get(this).onCalculation(this, () -> RatePrompt.maybeShow(this));
     }
 

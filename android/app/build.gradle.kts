@@ -22,6 +22,8 @@ android {
         buildConfigField("String", "APP_API_KEY", "\"${project.findProperty("APP_API_KEY") ?: "change-me-app-key"}\"")
         // AdMob application ID (NOT an ad unit). Google test app id by default.
         manifestPlaceholders["admobAppId"] = project.findProperty("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
+        // OneSignal app ID (public). Can also be set/overridden from the admin panel (App tab).
+        buildConfigField("String", "ONESIGNAL_APP_ID", "\"${project.findProperty("ONESIGNAL_APP_ID") ?: ""}\"")
         // AppLovin MAX SDK key (leave empty to disable MAX entirely)
         manifestPlaceholders["applovinSdkKey"] = project.findProperty("APPLOVIN_SDK_KEY") ?: ""
 
@@ -93,6 +95,9 @@ dependencies {
     // Networking
     implementation(libs.okhttp)
     implementation(libs.gson)
+
+    // Push notifications + in-app messages
+    implementation(libs.onesignal)
 
     // Play in-app review and in-app update
     implementation(libs.play.review)

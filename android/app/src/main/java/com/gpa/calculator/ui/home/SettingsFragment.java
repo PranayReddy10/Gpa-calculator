@@ -72,6 +72,25 @@ public class SettingsFragment extends Fragment {
         b.switchHaptics.setChecked(p.hapticFeedback());
         b.switchHaptics.setOnCheckedChangeListener((v, on) -> { p.setHapticFeedback(on); if (on) Haptics.confirm(v); });
 
+        // ---- notifications (OneSignal)
+        boolean pushAvailable = com.gpa.calculator.push.PushManager.isAvailable();
+        b.rowNotifications.setVisibility(pushAvailable ? View.VISIBLE : View.GONE);
+        b.dividerNotifications.setVisibility(pushAvailable ? View.VISIBLE : View.GONE);
+        b.switchNotifications.setChecked(p.pushEnabled() && com.gpa.calculator.push.PushManager.hasPermission());
+        b.switchNotifications.setOnCheckedChangeListener((v, on) -> {
+            if (on && !com.gpa.calculator.push.PushManager.hasPermission()) {
+                com.gpa.calculator.push.PushManager.requestPermission(requireActivity(), granted -> {
+                    if (b == null || granted) return;
+                    b.switchNotifications.setChecked(false);
+                    Snackbar.make(b.getRoot(), R.string.push_denied, Snackbar.LENGTH_LONG)
+                            .setAction(R.string.open_settings, x -> com.gpa.calculator.push.PushManager.openSystemSettings(requireActivity()))
+                            .show();
+                });
+            } else {
+                com.gpa.calculator.push.PushManager.setEnabled(requireContext(), on);
+            }
+        });
+
         // ---- data
         b.switchHistory.setChecked(p.saveHistory());
         b.switchHistory.setOnCheckedChangeListener((v, on) -> p.setSaveHistory(on));

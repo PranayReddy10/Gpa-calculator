@@ -53,6 +53,7 @@
   <a data-tab="dash" class="active">Dashboard</a>
   <a data-tab="ads">Ads</a>
   <a data-tab="appcfg">App</a>
+  <a data-tab="push">Notifications</a>
   <a data-tab="devices">Devices</a>
   <a data-tab="events">Events</a>
   <a data-tab="account">Account</a>
@@ -168,15 +169,43 @@
         <div><label>More apps URL</label><input type="text" id="app.more_apps_url"></div>
       </div>
       <label>Share text</label><textarea id="app.share_text"></textarea>
-      <h3>Announcement (shown once per id)</h3>
-      <div class="chk"><input type="checkbox" id="app.announcement.enabled"><label for="app.announcement.enabled" style="margin:0">Enabled</label></div>
+      <h3>Pop-up (shown in the app when its rules match)</h3>
+      <div class="chk"><input type="checkbox" id="app.popup.enabled"><label for="app.popup.enabled" style="margin:0">Enabled</label></div>
       <div class="row">
-        <div><label>Id (change it to show again)</label><input type="text" id="app.announcement.id"></div>
-        <div><label>Title</label><input type="text" id="app.announcement.title"></div>
-        <div><label>Button label</label><input type="text" id="app.announcement.button"></div>
-        <div><label>Link URL (optional)</label><input type="text" id="app.announcement.url"></div>
+        <div><label>Campaign id (change it to show again to everyone)</label><input type="text" id="app.popup.id" placeholder="diwali-2026"></div>
+        <div><label>Title</label><input type="text" id="app.popup.title"></div>
+        <div><label>Image URL (optional, 16:9 works best)</label><input type="text" id="app.popup.image_url" placeholder="https://…"></div>
       </div>
-      <label>Body</label><textarea id="app.announcement.body"></textarea>
+      <label>Message</label><textarea id="app.popup.body"></textarea>
+      <div class="row">
+        <div><label>Main button label</label><input type="text" id="app.popup.primary_label"></div>
+        <div><label>Main button action</label><select id="app.popup.primary_action">
+          <option value="dismiss">Just close</option><option value="url">Open a link</option><option value="calculator">Open a calculator</option>
+          <option value="rate">Rate the app</option><option value="share">Share the app</option><option value="update">Update from Play Store</option>
+          <option value="notifications">Ask to turn on notifications</option></select></div>
+        <div><label>Link or calculator id (for "Open a link" / "Open a calculator", e.g. emi, sgpa, currency)</label><input type="text" id="app.popup.primary_value"></div>
+        <div><label>Second button label (blank = none)</label><input type="text" id="app.popup.secondary_label" placeholder="Later"></div>
+      </div>
+      <div class="row">
+        <div><label>How often</label><select id="app.popup.frequency"><option value="once">Once per device</option><option value="daily">Once a day</option><option value="every_open">Every app open</option></select></div>
+        <div><label>Who sees it</label><select id="app.popup.audience"><option value="all">Everyone</option><option value="new">New users (installed &lt; 7 days)</option><option value="returning">Returning users (installed 7+ days)</option></select></div>
+        <div><label>Delay after app opens (seconds)</label><input type="number" id="app.popup.delay_sec" min="0"></div>
+        <div><label>Start date (optional)</label><input type="text" id="app.popup.start_date" placeholder="YYYY-MM-DD"></div>
+        <div><label>End date (optional)</label><input type="text" id="app.popup.end_date" placeholder="YYYY-MM-DD"></div>
+        <div><label>Only app version code ≥ (0 = any)</label><input type="number" id="app.popup.min_version_code" min="0"></div>
+        <div><label>Only app version code ≤ (0 = any)</label><input type="number" id="app.popup.max_version_code" min="0"></div>
+      </div>
+      <small>At most one pop-up per app session. It waits until no full-screen ad is showing.</small>
+      <h3>Push notifications (OneSignal)</h3>
+      <div class="row">
+        <div><label>OneSignal app ID (public; API key goes in config.php)</label><input type="text" id="app.onesignal_app_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+        <div><label>Ask for notification permission after N app opens</label><input type="number" id="features.push_prompt_after_opens" min="1"></div>
+      </div>
+      <div class="row">
+        <div><div class="chk"><input type="checkbox" id="features.push_enabled"><label for="features.push_enabled" style="margin:0">Push notifications</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="features.push_prompt_enabled"><label for="features.push_prompt_enabled" style="margin:0">Friendly "turn on notifications" pop-up</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="features.in_app_messages"><label for="features.in_app_messages" style="margin:0">OneSignal in-app messages</label></div></div>
+      </div>
       <h3>Features</h3>
       <div class="row">
         <div><div class="chk"><input type="checkbox" id="features.cloud_save"><label for="features.cloud_save" style="margin:0">Cloud save</label></div></div>
@@ -188,6 +217,33 @@
       <label>Currency rates API (Frankfurter / ECB JSON format; the app appends ?from=USD)</label><input type="text" id="features.currency_api_url">
       <p><button class="primary" id="saveApp">Save app settings</button></p>
     </div>
+  </div>
+
+  <!-- ------------------------------------------------ Notifications -->
+  <div id="tab-push" class="hidden">
+    <div class="card">
+      <h2>Send push notification</h2>
+      <div id="pushState" class="msg"></div>
+      <div id="pushMsg" class="msg"></div>
+      <div class="row">
+        <div><label>Title (optional)</label><input type="text" id="pTitle" maxlength="100"></div>
+        <div><label>Internal name (optional, shown in OneSignal)</label><input type="text" id="pName"></div>
+      </div>
+      <label>Message</label><textarea id="pMessage" maxlength="500" placeholder="Exam results are out — calculate your SGPA in seconds"></textarea>
+      <div class="row">
+        <div><label>When tapped, open</label><select id="pOpen"><option value="">The app</option><option value="calc">A calculator</option><option value="url">A link</option></select></div>
+        <div id="pCalcWrap" class="hidden"><label>Calculator id (e.g. sgpa, cgpa, emi, currency, unit_price)</label><input type="text" id="pCalc"></div>
+        <div id="pUrlWrap" class="hidden"><label>Link</label><input type="text" id="pUrl" placeholder="https://…"></div>
+        <div><label>Big picture URL (optional, https)</label><input type="text" id="pImage"></div>
+      </div>
+      <div class="row">
+        <div><label>Send to</label><select id="pSegment"></select></div>
+        <div><label>Schedule (optional, your local time)</label><input type="datetime-local" id="pWhen"></div>
+        <div><label>Or test on one device (device id from the Devices tab)</label><input type="text" id="pDevice"></div>
+      </div>
+      <p><button class="primary" id="pSend">Send</button> <small>Segments are defined in your OneSignal dashboard.</small></p>
+    </div>
+    <div class="card"><h2>History</h2><table id="pushHistory"></table></div>
   </div>
 
   <!-- ------------------------------------------------ Devices -->
@@ -260,11 +316,12 @@
   document.querySelectorAll('nav a').forEach(a => a.onclick = () => showTab(a.dataset.tab));
   function showTab(t){
     document.querySelectorAll('nav a').forEach(a => a.classList.toggle('active', a.dataset.tab === t));
-    ['dash','ads','appcfg','devices','events','account'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
+    ['dash','ads','appcfg','push','devices','events','account'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
     if (t === 'dash') loadStats();
     if (t === 'ads' || t === 'appcfg') loadConfig();
     if (t === 'devices') loadDevices();
     if (t === 'events') loadEvents();
+    if (t === 'push') loadPush();
   }
 
   // ---- dashboard
@@ -322,12 +379,45 @@
   $('saveAds').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('ads')); fillForm(); msg('adsMsg', 'Saved. Apps will use the new settings on next launch.', true); } catch(e){ msg('adsMsg', e.message, false); } };
   $('saveApp').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('appcfg')); fillForm(); msg('appMsg', 'Saved.', true); } catch(e){ msg('appMsg', e.message, false); } };
 
+  // ---- push notifications
+  $('pOpen').onchange = () => { $('pCalcWrap').classList.toggle('hidden', $('pOpen').value !== 'calc'); $('pUrlWrap').classList.toggle('hidden', $('pOpen').value !== 'url'); };
+  async function loadPush(){
+    try {
+      const st = await api('GET', '/admin/push/status');
+      const sel = $('pSegment'); const cur = sel.value;
+      sel.innerHTML = st.segments.map(x => `<option>${esc(x)}</option>`).join('');
+      if (cur) sel.value = cur;
+      const el = $('pushState');
+      if (st.configured) { el.className = 'msg ok'; el.textContent = 'OneSignal configured (app ' + st.app_id + '). Send a test to one device first.'; }
+      else { el.className = 'msg err'; el.textContent = !st.app_id ? 'Add your OneSignal app ID in the App tab.' : 'Add ONESIGNAL_API_KEY to config.php on the server.'; }
+      const h = await api('GET', '/admin/push?limit=50');
+      table($('pushHistory'), h, [['Sent', r => fmtTs(r.created_at)], ['Title', 'title'], ['Message', 'message'], ['To', 'target'], ['Status', r => r.status + (r.error ? ' — ' + r.error : '')], ['By', 'admin']]);
+    } catch(e){ msg('pushMsg', e.message, false); }
+  }
+  $('pSend').onclick = async () => {
+    const body = {title: $('pTitle').value, name: $('pName').value, message: $('pMessage').value, image: $('pImage').value, segment: $('pSegment').value, test_device_id: $('pDevice').value.trim()};
+    if ($('pOpen').value === 'calc') body.calc = $('pCalc').value.trim();
+    if ($('pOpen').value === 'url') body.url = $('pUrl').value.trim();
+    if ($('pWhen').value) body.send_after = new Date($('pWhen').value).toISOString();
+    const who = body.test_device_id ? 'device ' + body.test_device_id : 'segment "' + body.segment + '"';
+    if (!confirm('Send this notification to ' + who + '?')) return;
+    $('pSend').disabled = true;
+    try { const r = await api('POST', '/admin/push', body); msg('pushMsg', (r.status === 'scheduled' ? 'Scheduled' : 'Sent') + ' (OneSignal id ' + r.onesignal_id + ').', true); $('pMessage').value = ''; loadPush(); }
+    catch(e){ msg('pushMsg', e.message, false); loadPush(); }
+    finally { $('pSend').disabled = false; }
+  };
+
   // ---- devices
   async function loadDevices(){
     try {
       const d = await api('GET', '/admin/devices?page=' + devPage);
       $('devTotal').textContent = '(' + d.total + ' total)'; $('devPage').textContent = devPage;
-      table($('devices'), d.items, [['Device','device_id'],['Model', r => (r.manufacturer||'') + ' ' + (r.model||'')],['Android','os_version'],['App', r => (r.app_version||'') + ' (' + (r.app_version_code||'') + ')'],['Country','country'],['Opens','open_count'],['First seen', r => fmtTs(r.first_seen)],['Last seen', r => fmtTs(r.last_seen)]]);
+      const cols = ['Device','Model','Android','App','Country','Opens','First seen','Last seen',''];
+      $('devices').innerHTML = '<tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr>' + d.items.map(r =>
+        `<tr><td title="${esc(r.device_id)}">${esc(String(r.device_id).slice(0, 8))}…</td><td>${esc((r.manufacturer||'') + ' ' + (r.model||''))}</td><td>${esc(r.os_version)}</td>` +
+        `<td>${esc((r.app_version||'') + ' (' + (r.app_version_code||'') + ')')}</td><td>${esc(r.country)}</td><td>${esc(r.open_count)}</td>` +
+        `<td>${esc(fmtTs(r.first_seen))}</td><td>${esc(fmtTs(r.last_seen))}</td><td><button class="ghost" data-dev="${esc(r.device_id)}">Test push</button></td></tr>`).join('');
+      $('devices').querySelectorAll('button[data-dev]').forEach(btn => btn.onclick = () => { showTab('push'); $('pDevice').value = btn.dataset.dev; $('pMessage').focus(); });
     } catch(e){ alert(e.message); }
   }
   $('devPrev').onclick = () => { if (devPage > 1) { devPage--; loadDevices(); } };

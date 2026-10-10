@@ -110,6 +110,9 @@ public final class AdsManager implements ConfigStore.Listener {
         }
     }
 
+    /** True while an interstitial, app-open or rewarded ad is on screen. */
+    public boolean isFullScreenShowing() { return fullScreenShowing; }
+
     // ------------------------------------------------------------------ gating
     public boolean isAdFree() {
         return Prefs.get(app).adFreeUntil() > System.currentTimeMillis();

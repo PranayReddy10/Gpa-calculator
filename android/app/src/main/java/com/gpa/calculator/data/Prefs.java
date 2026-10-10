@@ -44,6 +44,8 @@ public final class Prefs {
     public void setSaveHistory(boolean b) { sp.edit().putBoolean("save_history", b).apply(); }
     public boolean cloudSync() { return sp.getBoolean("cloud_sync", true); }
     public void setCloudSync(boolean b) { sp.edit().putBoolean("cloud_sync", b).apply(); }
+    public boolean pushEnabled() { return sp.getBoolean("push_enabled", true); }
+    public void setPushEnabled(boolean b) { sp.edit().putBoolean("push_enabled", b).apply(); }
     public boolean analyticsOptIn() { return sp.getBoolean("analytics_opt_in", true); }
     public void setAnalyticsOptIn(boolean b) { sp.edit().putBoolean("analytics_opt_in", b).apply(); }
 
@@ -69,8 +71,6 @@ public final class Prefs {
     public void setRatePromptShown() { sp.edit().putBoolean("rate_prompt_shown", true).apply(); }
     public long adFreeUntil() { return sp.getLong("ad_free_until", 0); }
     public void setAdFreeUntil(long t) { sp.edit().putLong("ad_free_until", t).apply(); }
-    public String seenAnnouncementId() { return sp.getString("seen_announcement", ""); }
-    public void setSeenAnnouncementId(String id) { sp.edit().putString("seen_announcement", id).apply(); }
     public boolean onboardingDone() { return sp.getBoolean("onboarding_done", false); }
     public void setOnboardingDone() { sp.edit().putBoolean("onboarding_done", true).apply(); }
 

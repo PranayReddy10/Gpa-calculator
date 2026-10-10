@@ -3,3 +3,4 @@
 # APP_API_KEY=same-value-as-backend-config
 # ADMOB_APP_ID=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
 # APPLOVIN_SDK_KEY=your-applovin-sdk-key
+# ONESIGNAL_APP_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx

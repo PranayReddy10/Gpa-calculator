@@ -28,7 +28,15 @@ import com.gpa.calculator.ads.ConsentManager;
 import com.gpa.calculator.data.Prefs;
 import com.gpa.calculator.data.remote.Analytics;
 import com.gpa.calculator.data.remote.ConfigStore;
+import com.gpa.calculator.data.remote.PopupRules;
 import com.gpa.calculator.data.remote.model.RemoteConfig;
+import com.gpa.calculator.core.Calculator;
+import com.gpa.calculator.core.CalculatorRegistry;
+import com.gpa.calculator.push.PushManager;
+import com.gpa.calculator.ui.calc.CalcLauncher;
+import com.gpa.calculator.ui.common.PopupDialog;
+import com.gpa.calculator.ui.common.RatePrompt;
+import com.gpa.calculator.ui.common.ShareUtil;
 import com.gpa.calculator.databinding.ActivityMainBinding;
 import com.gpa.calculator.ui.home.FavouritesFragment;
 import com.gpa.calculator.ui.home.HistoryFragment;
@@ -40,9 +48,12 @@ public class MainActivity extends BaseActivity {
     private ActivityMainBinding b;
     private AdsManager.BannerHandle banner;
     private int currentTab = R.id.nav_home;
+    /** One pop-up (admin campaign or notification prompt) per app session at most. */
+    private static boolean sessionPopupShown;
+    private boolean adsReady;
     private final ConfigStore.Listener configListener = cfg -> {
-        showAnnouncement(cfg);
         loadBanner();
+        if (adsReady) maybeShowPopup();
     };
 
     @Override
@@ -88,10 +99,12 @@ public class MainActivity extends BaseActivity {
         ConsentManager.gather(this, canRequestAds -> {
             AdsManager.get(this).start(canRequestAds);
             loadBanner();
+            adsReady = true;
+            maybeShowPopup();
         });
 
         ConfigStore.get(this).addListener(configListener);
-        showAnnouncement(ConfigStore.get(this).config());
+        handleDeepLink(getIntent());
         checkUpdates();
         Analytics.get(this).log("screen_view", "screen", "main");
     }
@@ -122,21 +135,117 @@ public class MainActivity extends BaseActivity {
         banner = AdsManager.get(this).attachBanner(this, b.adContainer, "home");
     }
 
-    private void showAnnouncement(RemoteConfig cfg) {
-        RemoteConfig.Announcement a = cfg.app.announcement;
-        if (a == null || !a.enabled || a.id == null || a.id.isEmpty()) return;
-        if (a.id.equals(Prefs.get(this).seenAnnouncementId())) return;
-        Prefs.get(this).setSeenAnnouncementId(a.id);
-        MaterialAlertDialogBuilder d = new MaterialAlertDialogBuilder(this)
-                .setTitle(a.title)
-                .setMessage(a.body)
-                .setPositiveButton(a.button == null || a.button.isEmpty() ? getString(R.string.ok) : a.button, (dlg, w) -> {
-                    if (a.url != null && !a.url.isEmpty()) {
-                        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(a.url))); } catch (Exception ignored) {}
-                    }
+    // ------------------------------------------------------------------ push deep links
+    @Override
+    protected void onNewIntent(@NonNull Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleDeepLink(intent);
+    }
+
+    /** Opens the calculator / URL named by a tapped push notification (see PushManager). */
+    private void handleDeepLink(@Nullable Intent intent) {
+        if (intent == null) return;
+        String calcId = intent.getStringExtra(PushManager.EXTRA_OPEN_CALC);
+        String url = intent.getStringExtra(PushManager.EXTRA_OPEN_URL);
+        intent.removeExtra(PushManager.EXTRA_OPEN_CALC);
+        intent.removeExtra(PushManager.EXTRA_OPEN_URL);
+        if (calcId == null && url == null) return;
+        sessionPopupShown = true; // the user came for something specific; don't interrupt with a pop-up
+        Calculator c = calcId == null ? null : CalculatorRegistry.byId(calcId);
+        if (c != null) {
+            b.getRoot().postDelayed(() -> CalcLauncher.open(this, null, c, null, false), 350);
+        } else if (url != null) {
+            openUrl(url);
+        }
+    }
+
+    private void openUrl(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (Exception ignored) {
+        }
+    }
+
+    // ------------------------------------------------------------------ pop-ups
+    /** Admin campaign pop-up if its rules match, otherwise (maybe) the notification soft prompt. */
+    private void maybeShowPopup() {
+        if (sessionPopupShown || isFinishing()) return;
+        RemoteConfig.Popup p = ConfigStore.get(this).config().app.popup;
+        Prefs prefs = Prefs.get(this);
+        PopupRules.State st = new PopupRules.State();
+        st.now = System.currentTimeMillis();
+        st.versionCode = BuildConfig.VERSION_CODE;
+        st.firstOpenAt = prefs.firstOpenAt();
+        st.lastShownAt = p.id == null ? 0 : prefs.getLong("popup_shown_" + p.id, 0);
+        st.shownThisSession = sessionPopupShown;
+        if (PopupRules.shouldShow(p, st)) {
+            sessionPopupShown = true;
+            b.getRoot().postDelayed(() -> showPopupWhenFree(p, 0), Math.max(0, p.delay_sec) * 1000L);
+        } else {
+            b.getRoot().postDelayed(this::maybeShowPushPrompt, 4000);
+        }
+    }
+
+    /** Waits until no interstitial / app-open ad or consent form is on screen. */
+    private void showPopupWhenFree(RemoteConfig.Popup p, int attempt) {
+        if (isFinishing() || isDestroyed()) return;
+        if (AdsManager.get(this).isFullScreenShowing() || !hasWindowFocus()) {
+            if (attempt < 15) b.getRoot().postDelayed(() -> showPopupWhenFree(p, attempt + 1), 2000);
+            return;
+        }
+        Prefs.get(this).putLong("popup_shown_" + p.id, System.currentTimeMillis());
+        Analytics.get(this).log("popup_shown", "id", p.id);
+        PopupDialog.with(this)
+                .title(p.title)
+                .body(p.body)
+                .image(p.image_url)
+                .primary(p.primary_label == null || p.primary_label.isEmpty() ? getString(R.string.ok) : p.primary_label, () -> {
+                    Analytics.get(this).log("popup_click", "id", p.id, "action", p.primary_action);
+                    runPopupAction(p);
+                })
+                .secondary(p.secondary_label, () -> Analytics.get(this).log("popup_dismiss", "id", p.id))
+                .onDismiss(() -> Analytics.get(this).log("popup_dismiss", "id", p.id))
+                .show();
+    }
+
+    private void runPopupAction(RemoteConfig.Popup p) {
+        String v = p.primary_value == null ? "" : p.primary_value.trim();
+        switch (p.primary_action == null ? "dismiss" : p.primary_action) {
+            case "url":
+                if (!v.isEmpty()) openUrl(v);
+                break;
+            case "calculator": {
+                Calculator c = CalculatorRegistry.byId(v);
+                if (c != null) CalcLauncher.open(this, null, c, null, false);
+                break;
+            }
+            case "rate":
+                RatePrompt.launch(this);
+                break;
+            case "share": {
+                String text = ConfigStore.get(this).config().app.share_text;
+                ShareUtil.shareText(this, text == null || text.isEmpty() ? getString(R.string.share_text_default) : text);
+                break;
+            }
+            case "update":
+                openUrl("https://play.google.com/store/apps/details?id=" + getPackageName());
+                break;
+            case "notifications":
+                PushManager.requestPermission(this, granted -> {
+                    if (!granted) Snackbar.make(b.getRoot(), R.string.push_denied, Snackbar.LENGTH_LONG)
+                            .setAction(R.string.open_settings, x -> PushManager.openSystemSettings(this))
+                            .setAnchorView(b.bottomNav).show();
                 });
-        if (a.url != null && !a.url.isEmpty()) d.setNegativeButton(R.string.later, null);
-        d.show();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void maybeShowPushPrompt() {
+        if (sessionPopupShown || isFinishing() || !hasWindowFocus() || AdsManager.get(this).isFullScreenShowing()) return;
+        if (PushManager.maybeShowSoftPrompt(this)) sessionPopupShown = true;
     }
 
     private void checkUpdates() {

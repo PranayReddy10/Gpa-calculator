@@ -12,3 +12,4 @@ CREATE INDEX IF NOT EXISTS idx_events_name_ts ON events(name, ts);
 CREATE INDEX IF NOT EXISTS idx_events_device ON events(device_id);
 CREATE TABLE IF NOT EXISTS saved_calculations (id INTEGER PRIMARY KEY AUTOINCREMENT, device_id TEXT NOT NULL, local_id INTEGER, calc_id TEXT NOT NULL, title TEXT, inputs TEXT, results TEXT, summary TEXT, created_at INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS idx_saves_device ON saved_calculations(device_id, deleted, created_at);
+CREATE TABLE IF NOT EXISTS push_log (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, message TEXT NOT NULL, target TEXT NOT NULL, payload TEXT, onesignal_id TEXT, recipients INTEGER, status TEXT NOT NULL, error TEXT, admin TEXT, created_at INTEGER NOT NULL);

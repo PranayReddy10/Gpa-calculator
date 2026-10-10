@@ -68,7 +68,10 @@ public class RemoteConfig {
         public int latest_version_code = 0;
         public int force_update_below = 0;
         public String update_message = "A new version is available with new features and fixes.";
-        public Announcement announcement = new Announcement();
+        /** Admin-controlled pop-up (see PopupRules for when it shows). */
+        public Popup popup = new Popup();
+        /** OneSignal app ID (public). Overrides the ONESIGNAL_APP_ID build property when set. */
+        public String onesignal_app_id = "";
         public String privacy_url = "";
         public String terms_url = "";
         public String contact_email = "";
@@ -76,13 +79,29 @@ public class RemoteConfig {
         public String more_apps_url = "";
     }
 
-    public static class Announcement {
+    public static class Popup {
         public boolean enabled = false;
+        /** Change the id to show a new campaign to users who already saw the previous one. */
         public String id = "";
         public String title = "";
         public String body = "";
-        public String url = "";
-        public String button = "OK";
+        public String image_url = "";
+        public String primary_label = "OK";
+        /** dismiss | url | calculator | rate | share | update | notifications */
+        public String primary_action = "dismiss";
+        /** URL for "url", calculator id for "calculator". */
+        public String primary_value = "";
+        public String secondary_label = "";
+        /** once | daily | every_open */
+        public String frequency = "once";
+        /** all | new (installed < 7 days) | returning (installed >= 7 days) */
+        public String audience = "all";
+        public int delay_sec = 3;
+        public int min_version_code = 0;
+        public int max_version_code = 0;
+        /** Optional yyyy-MM-dd window (inclusive). */
+        public String start_date = "";
+        public String end_date = "";
     }
 
     public static class Features {
@@ -91,6 +110,13 @@ public class RemoteConfig {
         public boolean rate_prompt = true;
         public int rate_prompt_after_calcs = 8;
         public boolean in_app_update = true;
+        /** OneSignal push notifications. */
+        public boolean push_enabled = true;
+        /** Friendly "turn on notifications?" pop-up before the Android permission dialog. */
+        public boolean push_prompt_enabled = true;
+        public int push_prompt_after_opens = 2;
+        /** OneSignal in-app messages (designed in the OneSignal dashboard). */
+        public boolean in_app_messages = true;
         /** Exchange-rate feed (Frankfurter/ECB format: {"base","rates":{...}}); "?from=USD" is appended. */
         public String currency_api_url = "https://api.frankfurter.app/latest";
     }

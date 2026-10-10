@@ -116,13 +116,17 @@ $cfg['ads']['priority'] = ['meta', 'admob'];
 $cfg['ads']['test_mode'] = false;
 $cfg['ads']['interstitial_every_n_calcs'] = '5';
 $cfg['ads']['admob']['banner'] = 'ca-app-pub-1/2';
-$cfg['app']['announcement']['enabled'] = true;
-$cfg['app']['announcement']['id'] = 'v2';
+$cfg['app']['popup']['enabled'] = true;
+$cfg['app']['popup']['id'] = 'v2';
+$cfg['app']['popup']['title'] = 'New in 2.0';
+$cfg['app']['popup']['primary_action'] = 'calculator';
+$cfg['app']['popup']['primary_value'] = 'emi';
+$cfg['app']['popup']['frequency'] = 'daily';
 $cfg['unknown_key'] = 'dropped';
 [$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
 check('admin config saves', $s === 200 && $p['data']['ads']['priority'] === ['meta', 'admob'] && $p['data']['ads']['test_mode'] === false && $p['data']['ads']['interstitial_every_n_calcs'] === 5 && !isset($p['data']['unknown_key']), $p);
 [$s, $p] = call('GET', '/api/v1/config', [], $APP);
-check('app sees new config', $p['data']['ads']['admob']['banner'] === 'ca-app-pub-1/2' && $p['data']['app']['announcement']['id'] === 'v2');
+check('app sees new config', $p['data']['ads']['admob']['banner'] === 'ca-app-pub-1/2' && $p['data']['app']['popup']['id'] === 'v2' && $p['data']['app']['popup']['frequency'] === 'daily' && $p['data']['app']['popup']['delay_sec'] === 3);
 $cfg['ads']['priority'] = ['admob'];
 $cfg['ads']['interstitial_open_every_n'] = 0;
 [$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
@@ -148,6 +152,69 @@ check('login with new password', $s === 200);
 check('logout', $s === 200);
 [$s, $p] = call('GET', '/api/v1/admin/me', [], $ADM);
 check('token invalid after logout', $s === 401);
+
+echo "popup + push\n";
+[$s, $p] = call('POST', '/api/v1/admin/login', ['username' => 'admin', 'password' => 'another-pass-456']);
+$ADM = ['Authorization' => 'Bearer ' . $p['data']['token']];
+[$s, $p] = call('GET', '/api/v1/admin/config', [], $ADM);
+$cfg = $p['data'];
+$bad = $cfg; $bad['app']['popup']['primary_action'] = 'explode';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $bad, $ADM);
+check('popup action validated', $s === 422);
+$bad = $cfg; $bad['app']['popup']['start_date'] = '20/10/2026';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $bad, $ADM);
+check('popup date validated', $s === 422);
+$bad = $cfg; $bad['app']['popup']['primary_action'] = 'url'; $bad['app']['popup']['primary_value'] = 'javascript:alert(1)';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $bad, $ADM);
+check('popup url must be http(s)', $s === 422);
+$bad = $cfg; $bad['app']['onesignal_app_id'] = 'not-a-uuid';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $bad, $ADM);
+check('onesignal app id validated', $s === 422);
+
+[$s, $p] = call('GET', '/api/v1/admin/push/status', [], $ADM);
+check('push status: not configured', $s === 200 && $p['data']['configured'] === false);
+[$s, $p] = call('POST', '/api/v1/admin/push', ['message' => 'hi'], $ADM);
+check('push refuses when not configured', $s === 422);
+
+// configure: app id from the admin panel, API key from config.php
+$cfg['app']['onesignal_app_id'] = '11111111-2222-3333-4444-555555555555';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+check('onesignal app id saved', $s === 200);
+[$s, $p] = call('GET', '/api/v1/config', [], $APP);
+check('app receives onesignal app id', $p['data']['app']['onesignal_app_id'] === '11111111-2222-3333-4444-555555555555');
+App::boot($config + ['ONESIGNAL_API_KEY' => 'os_v2_app_testkey']);
+
+$sent = [];
+\Gpa\Push::$transport = function (string $url, array $headers, string $body) use (&$sent) {
+    $sent[] = ['url' => $url, 'headers' => $headers, 'body' => json_decode($body, true)];
+    return [200, '{"id":"notif-123","external_id":null}'];
+};
+[$s, $p] = call('POST', '/api/v1/admin/push', ['title' => 'Exam season', 'message' => 'Check your SGPA', 'segment' => 'Active Subscriptions', 'calc' => 'sgpa', 'image' => 'https://example.com/a.png'], $ADM);
+$b = $sent[0]['body'] ?? [];
+check('push sent', $s === 200 && $p['data']['status'] === 'sent' && $p['data']['onesignal_id'] === 'notif-123', $p);
+check('push payload', $b['app_id'] === '11111111-2222-3333-4444-555555555555' && $b['included_segments'] === ['Active Subscriptions']
+    && $b['headings']['en'] === 'Exam season' && $b['data']['calc'] === 'sgpa' && $b['big_picture'] === 'https://example.com/a.png' && !isset($b['url']), $b);
+check('push uses Key auth for os_v2 keys', in_array('Authorization: Key os_v2_app_testkey', $sent[0]['headers'], true));
+
+[$s, $p] = call('POST', '/api/v1/admin/push', ['message' => 'Test', 'test_device_id' => 'abc-123', 'url' => 'https://example.com', 'send_after' => gmdate('c', time() + 3600)], $ADM);
+$b = $sent[1]['body'] ?? [];
+check('test push to one device, scheduled', $s === 200 && $p['data']['status'] === 'scheduled' && $b['include_aliases']['external_id'] === ['abc-123'] && !isset($b['included_segments']) && $b['data']['open_url'] === 'https://example.com' && isset($b['send_after']), $b);
+
+[$s, $p] = call('POST', '/api/v1/admin/push', ['message' => ''], $ADM);
+check('push validates message', $s === 422);
+[$s, $p] = call('POST', '/api/v1/admin/push', ['message' => 'x', 'calc' => 'DROP TABLE'], $ADM);
+check('push validates calc id', $s === 422);
+[$s, $p] = call('POST', '/api/v1/admin/push', ['message' => 'x', 'send_after' => '2001-01-01 00:00'], $ADM);
+check('push rejects past schedule', $s === 422);
+
+\Gpa\Push::$transport = fn() => [200, '{"id":"","errors":["All included players are not subscribed"]}'];
+[$s, $p] = call('POST', '/api/v1/admin/push', ['message' => 'nobody'], $ADM);
+check('push surfaces OneSignal errors', $s === 502 && strpos($p['error'], 'not subscribed') !== false, $p);
+
+[$s, $p] = call('GET', '/api/v1/admin/push', [], $ADM);
+check('push history', $s === 200 && count($p['data']) === 3 && $p['data'][0]['status'] === 'failed' && $p['data'][2]['target'] === 'segment:Active Subscriptions', $p['data']);
+[$s, $p] = call('GET', '/api/v1/admin/push', [], []);
+check('push history needs admin', $s === 401);
 [$s, $p] = call('GET', '/api/v1/nope');
 check('404', $s === 404);
 

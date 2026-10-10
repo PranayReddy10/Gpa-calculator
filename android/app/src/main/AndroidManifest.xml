@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <application
@@ -30,6 +31,10 @@
         <meta-data
             android:name="com.google.android.gms.ads.flag.OPTIMIZE_AD_LOADING"
             android:value="true" />
+        <!-- Notification taps are routed by PushManager (deep links into calculators), not OneSignal's default launcher open -->
+        <meta-data
+            android:name="com.onesignal.NotificationOpened.DEFAULT"
+            android:value="DISABLE" />
         <!-- AppLovin MAX SDK key (set APPLOVIN_SDK_KEY gradle property). Empty = MAX disabled. -->
         <meta-data
             android:name="applovin.sdk.key"
