@@ -147,8 +147,11 @@ location.
 **Graphics** (in `docs/store/`):
 - App icon: `icon-512.png` (512×512, 32-bit PNG)
 - Feature graphic: `feature-graphic-1024x500.png`
-- Phone screenshots: take 4–8 from a real phone (Home, SGPA with grade, EMI, Currency, History).
-  The images in `docs/screenshots/` are design previews, not real captures, so don't upload them.
+- Phone screenshots: `phone/01-home.png` … `phone/07-history.png` (1080×1920, 9:16, headline +
+  phone frame, no ads shown). The screens inside are design previews, so compare each one with the
+  real app before uploading. If anything differs, take real captures of the same screens
+  (Home, SGPA, Marks %, EMI, Currency, Calculator, History) with test mode off and no ad on screen,
+  and re-frame them in the same style.
 
 **App name** (30 max): `GPA Calculator: CGPA, SGPA & %`
 
