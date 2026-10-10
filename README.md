@@ -59,7 +59,7 @@ calculators, ad impressions by network, versions, countries, device models, 30-d
 2. Put your keys in `android/local.properties` (Android Studio already created it with
    `sdk.dir`; it is ignored by git). Copy the lines from `android/local.properties.sample`:
    ```
-   API_BASE_URL=https://yourdomain.com/gpa-api/
+   API_BASE_URL=https://gpa.jntubooks.in/
    APP_API_KEY=<same value as APP_API_KEY in backend/config.php>
    ADMOB_APP_ID=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
    APPLOVIN_SDK_KEY=<optional, leave empty to disable MAX>
@@ -77,13 +77,15 @@ about ads (unit IDs, on/off, order, frequency) is remote.
 
 ## Backend: deploy on shared hosting
 
-1. Upload `backend/` to a folder of an existing domain, e.g. `public_html/gpa-api/`.
+1. Upload the **contents** of `backend/` to the document root of `gpa.jntubooks.in` (the folder
+   cPanel shows for that subdomain), so `index.php` and `.htaccess` sit at the top level.
 2. Create a MySQL database + user in cPanel.
 3. Copy `config.sample.php` → `config.php`, fill DB credentials, `APP_API_KEY`,
    `SETUP_KEY`, `ADMIN_USER`, `ADMIN_PASS`.
-4. Open `https://yourdomain.com/gpa-api/setup.php?key=<SETUP_KEY>` once (creates tables and
+4. Open `https://gpa.jntubooks.in/setup.php?key=<SETUP_KEY>` once (creates tables and
    the admin user), then **delete `setup.php`**.
-5. Admin panel: `https://yourdomain.com/gpa-api/admin/`.
+5. Admin panel: `https://gpa.jntubooks.in/admin/`. Check that
+   `https://gpa.jntubooks.in/config.php` shows **403 Forbidden** (secrets protected).
 6. In the Ads tab: enter unit IDs, set priority, turn **Test mode off** when going live.
 7. Push: create a OneSignal app (Android, with your Firebase server key / service account as
    OneSignal asks), put the **App API key** in `ONESIGNAL_API_KEY` in `config.php` and the

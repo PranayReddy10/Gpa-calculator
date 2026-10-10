@@ -28,8 +28,8 @@ android {
         versionName = "2.0.0"
 
         // --- Build-time configuration: set these in android/local.properties (see local.properties.sample) ---
-        // Backend base URL where backend/ is deployed, e.g. https://example.com/gpa-api/
-        buildConfigField("String", "API_BASE_URL", "\"${setting("API_BASE_URL", "https://example.com/gpa-api/")}\"")
+        // Backend base URL where backend/ is deployed (production: https://gpa.jntubooks.in/)
+        buildConfigField("String", "API_BASE_URL", "\"${setting("API_BASE_URL", "https://gpa.jntubooks.in/")}\"")
         // Shared secret that must match APP_API_KEY in backend/config.php
         buildConfigField("String", "APP_API_KEY", "\"${setting("APP_API_KEY", "change-me-app-key")}\"")
         // AdMob application ID (NOT an ad unit). Google test app id by default.

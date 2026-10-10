@@ -2,8 +2,8 @@
 # local.properties is ignored by git, so your keys never get committed.
 # After editing: File > Sync Project with Gradle Files, then Build > Rebuild Project.
 
-# Where backend/ is deployed (keep the trailing slash)
-API_BASE_URL=https://yourdomain.com/gpa-api/
+# Where backend/ is deployed (keep the trailing slash). This is already the default.
+API_BASE_URL=https://gpa.jntubooks.in/
 # Must be exactly the same as APP_API_KEY in backend/config.php
 APP_API_KEY=paste-the-same-random-value-here
 # AdMob app ID from AdMob > Apps > App settings (contains a ~). Leave out to use Google's test ID.
