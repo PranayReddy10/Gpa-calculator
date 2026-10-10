@@ -81,5 +81,12 @@
     <string name="ok">OK</string>
     <string name="result_share_footer">Calculated with GPA Calculator</string>
     <string name="play">Watch</string>
+    <string name="currency_from">From</string>
+    <string name="currency_to">To</string>
+    <string name="currency_amount">Amount</string>
+    <string name="currency_updated">Rates updated %1$s</string>
+    <string name="currency_offline">Using offline rates — pull to refresh when online</string>
+    <string name="currency_refresh">Refresh rates</string>
+    <string name="currency_swap">Swap currencies</string>
     <string name="first_launch_tip">Tip: tap ♥ on any calculator to add it to Favourites</string>
 </resources>

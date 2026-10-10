@@ -189,4 +189,32 @@ public class EngineTest {
         assertEquals("1,234.5", Fmt.fmt(1234.5, 2).replace(' ', ' '));
         assertEquals("0", Fmt.fmt(-0.0001, 2));
     }
+
+    @Test
+    public void expressionEvaluator() {
+        assertEquals(14.0, Expr.eval("2+3×4"), 1e-9);
+        assertEquals(20.0, Expr.eval("(2+3)×4"), 1e-9);
+        assertEquals(-4.0, Expr.eval("-2^2"), 1e-9);
+        assertEquals(8.0, Expr.eval("2^3"), 1e-9);
+        assertEquals(0.5, Expr.eval("50%"), 1e-9);
+        assertEquals(220.0, Expr.evalCalculatorStyle("200+10%"), 1e-9);
+        assertEquals(180.0, Expr.evalCalculatorStyle("200-10%"), 1e-9);
+        assertEquals(2.5, Expr.eval("10÷4"), 1e-9);
+        assertEquals(1234.5, Expr.eval("1,234.5"), 1e-9);
+        try { Expr.eval("1÷0"); fail(); } catch (CalcException e) { assertTrue(e.getMessage().contains("zero")); }
+        try { Expr.eval("(1+2"); fail(); } catch (CalcException e) { /* ok */ }
+        try { Expr.eval("1+"); fail(); } catch (CalcException e) { /* ok */ }
+    }
+
+    @Test
+    public void currencyConvert() {
+        java.util.Map<String, Double> rates = new java.util.HashMap<>();
+        rates.put("USD", 1.0); rates.put("INR", 80.0); rates.put("EUR", 0.5);
+        assertEquals(8000.0, Currencies.convert(100, "USD", "INR", rates), 1e-9);
+        assertEquals(160.0, Currencies.convert(1, "EUR", "INR", rates), 1e-9);
+        assertEquals("USD", Currencies.codeFromLabel(Currencies.label("USD")));
+        assertNotNull(CalculatorRegistry.byId("basic"));
+        assertEquals("basic", CalculatorRegistry.all().get(0).id());
+        assertNotNull(CalculatorRegistry.byId("currency"));
+    }
 }

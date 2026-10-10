@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public abstract class Calculator {
     /** Which screen renders this calculator. */
-    public enum Screen { GENERIC, GRADES, EMI }
+    public enum Screen { GENERIC, GRADES, EMI, BASIC, CURRENCY }
 
     public abstract String id();
     public abstract String name();

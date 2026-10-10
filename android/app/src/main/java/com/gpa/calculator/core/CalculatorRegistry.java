@@ -5,6 +5,7 @@ import com.gpa.calculator.core.calculators.ConverterCalculators;
 import com.gpa.calculator.core.calculators.EverydayCalculators;
 import com.gpa.calculator.core.calculators.FinanceCalculators;
 import com.gpa.calculator.core.calculators.PercentageCalculators;
+import com.gpa.calculator.core.calculators.ToolCalculators;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,10 +20,12 @@ public final class CalculatorRegistry {
 
     static {
         List<Calculator> list = new ArrayList<>();
+        list.add(ToolCalculators.basic());
         list.addAll(PercentageCalculators.all());
         list.addAll(AcademicCalculators.all());
         list.addAll(FinanceCalculators.all());
         list.addAll(EverydayCalculators.all());
+        list.add(ToolCalculators.currency());
         list.addAll(ConverterCalculators.all());
         for (Calculator c : list) {
             if (BY_ID.put(c.id(), c) != null) throw new IllegalStateException("Duplicate calculator id " + c.id());
