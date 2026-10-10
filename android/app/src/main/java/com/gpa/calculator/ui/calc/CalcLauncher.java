@@ -23,6 +23,8 @@ public final class CalcLauncher {
         switch (calc.screen()) {
             case GRADES: target = GradeCalculatorActivity.class; break;
             case EMI: target = EmiActivity.class; break;
+            case BASIC: target = BasicCalculatorActivity.class; break;
+            case CURRENCY: target = CurrencyActivity.class; break;
             default: target = CalculatorActivity.class;
         }
         Intent i = new Intent(activity, target).putExtra(EXTRA_ID, calc.id());

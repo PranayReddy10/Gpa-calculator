@@ -83,5 +83,7 @@ public class RemoteConfig {
         public boolean rate_prompt = true;
         public int rate_prompt_after_calcs = 8;
         public boolean in_app_update = true;
+        /** Exchange-rate feed (Frankfurter/ECB format: {"base","rates":{...}}); "?from=USD" is appended. */
+        public String currency_api_url = "https://api.frankfurter.app/latest";
     }
 }

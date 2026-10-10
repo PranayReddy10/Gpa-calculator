@@ -49,6 +49,7 @@ final class AppConfig
                 'rate_prompt' => true,
                 'rate_prompt_after_calcs' => 8,
                 'in_app_update' => true,
+                'currency_api_url' => 'https://api.frankfurter.app/latest',
             ],
         ];
     }

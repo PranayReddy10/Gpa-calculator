@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.gridlayout)
     implementation(libs.androidx.viewpager2)
     implementation(libs.androidx.splashscreen)
     implementation(libs.androidx.lifecycle.process)

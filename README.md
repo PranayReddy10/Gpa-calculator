@@ -1,7 +1,7 @@
 # GPA Calculator 2.0 — Android app + admin backend
 
 Complete rebuild of the Play Store app `com.gpa.calculator` with a Material 3 UI, animations,
-45 calculators, three ad networks controlled from an admin panel, cloud-saved history and
+47 calculators, three ad networks controlled from an admin panel, cloud-saved history and
 self-hosted usage analytics.
 
 ```
@@ -11,10 +11,11 @@ backend/   PHP 7.4+/8.x + MySQL API and admin panel for shared hosting (cPanel f
 
 ## What the app includes
 
-**Calculators (45)**
+**Calculators (47)**
 
 | Category | Calculators |
 |---|---|
+| Tools | Standard keypad calculator (live result, brackets, %), Currency converter (USD/INR/EUR/GBP/AED and 30+ more, live ECB rates cached for offline, feed URL set in admin panel) |
 | Percentage | Marks %, Ratio to %, General % (3 modes), Change in %, Discount (stacked + tax), % Difference, Marks needed |
 | Academic | SGPA, SGPA with Grade (4 grade scales), CGPA, GPA → %, % → GPA, CGPA → % (CBSE/VTU/JNTU), % → CGPA, GPA scale converter, Final exam grade needed, Attendance (bunk/attend), Grade from marks |
 | Finance | EMI with full amortisation schedule + chart, Simple interest, Compound interest, SIP, Lumpsum, FD, RD, Tax/GST (add/remove, CGST/SGST), Tip & split, Profit/Loss, Inflation, ROI/CAGR, Salary breakdown, Loan eligibility |
