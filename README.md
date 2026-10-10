@@ -61,6 +61,9 @@ UMP consent is gathered before any request.
 **Analytics** (own backend, no third-party SDK): installs, DAU/WAU/MAU, online now, top
 calculators, ad impressions by network, versions, countries, device models, 30-day charts.
 
+**Releasing to Google Play:** follow [RELEASE.md](RELEASE.md) (signing, admin settings, Data
+safety answers, store listing text). Store graphics are in `docs/store/`.
+
 ## Android: build
 
 1. Open `android/` in Android Studio (Ladybug or newer, JDK 17). The Gradle wrapper pins
@@ -96,7 +99,9 @@ about ads (unit IDs, on/off, order, frequency) is remote.
 5. Admin panel: `https://gpa.jntubooks.in/admin/`. Check that
    `https://gpa.jntubooks.in/config.php` shows **403 Forbidden** (secrets protected).
 6. In the Ads tab: enter unit IDs, set priority, turn **Test mode off** when going live.
-7. Push: create a OneSignal app (Android, with your Firebase server key / service account as
+7. Public pages served by the backend: `/privacy` (edit it in the admin **Privacy** tab) and
+   `/app-ads.txt` (built from the AdMob app ID plus extra lines in the **Ads** tab).
+8. Push: create a OneSignal app (Android, with your Firebase server key / service account as
    OneSignal asks), put the **App API key** in `ONESIGNAL_API_KEY` in `config.php` and the
    **App ID** in the admin App tab. The PHP `curl` extension must be enabled (it is on almost
    every host).

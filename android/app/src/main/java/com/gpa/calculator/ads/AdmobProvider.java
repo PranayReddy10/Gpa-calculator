@@ -66,8 +66,10 @@ public final class AdmobProvider implements AdProvider {
 
     @Override public boolean isInitialized() { return initialized; }
 
+    /** Test mode: Google's test unit. Production: the admin-panel unit, or "" if none is set (no ad). */
     private String id(String real, String test) {
-        return testMode || real == null || real.isEmpty() ? test : real;
+        if (testMode) return test;
+        return real == null ? "" : real.trim();
     }
 
     private static AdRequest request() { return new AdRequest.Builder().build(); }
@@ -75,8 +77,10 @@ public final class AdmobProvider implements AdProvider {
     // ---------------------------------------------------------------- banner
     @Override
     public void loadBanner(Activity activity, ViewGroup container, BannerCallback cb) {
+        String unit = id(cfg.banner, TEST_BANNER);
+        if (unit.isEmpty()) { cb.onFailed("no banner unit configured"); return; }
         AdView view = new AdView(activity);
-        view.setAdUnitId(id(cfg.banner, TEST_BANNER));
+        view.setAdUnitId(unit);
         DisplayMetrics dm = activity.getResources().getDisplayMetrics();
         int widthPx = container.getWidth() > 0 ? container.getWidth() : dm.widthPixels;
         int widthDp = (int) (widthPx / dm.density);
@@ -100,8 +104,10 @@ public final class AdmobProvider implements AdProvider {
     @Override
     public void loadInterstitial(Context context, LoadCallback cb) {
         if (interstitial != null || loadingInterstitial) return;
+        String unit = id(cfg.interstitial, TEST_INTERSTITIAL);
+        if (unit.isEmpty()) { cb.onFailed("no interstitial unit configured"); return; }
         loadingInterstitial = true;
-        InterstitialAd.load(context, id(cfg.interstitial, TEST_INTERSTITIAL), request(), new InterstitialAdLoadCallback() {
+        InterstitialAd.load(context, unit, request(), new InterstitialAdLoadCallback() {
             @Override public void onAdLoaded(@NonNull InterstitialAd ad) {
                 loadingInterstitial = false;
                 interstitial = ad;
@@ -139,8 +145,10 @@ public final class AdmobProvider implements AdProvider {
     @Override
     public void loadAppOpen(Context context, LoadCallback cb) {
         if (appOpen != null || loadingAppOpen) return;
+        String unit = id(cfg.app_open, TEST_APP_OPEN);
+        if (unit.isEmpty()) { cb.onFailed("no app open unit configured"); return; }
         loadingAppOpen = true;
-        AppOpenAd.load(context, id(cfg.app_open, TEST_APP_OPEN), request(), new AppOpenAd.AppOpenAdLoadCallback() {
+        AppOpenAd.load(context, unit, request(), new AppOpenAd.AppOpenAdLoadCallback() {
             @Override public void onAdLoaded(@NonNull AppOpenAd ad) {
                 loadingAppOpen = false;
                 appOpen = ad;
@@ -176,8 +184,10 @@ public final class AdmobProvider implements AdProvider {
     @Override
     public void loadRewarded(Context context, LoadCallback cb) {
         if (rewarded != null || loadingRewarded) return;
+        String unit = id(cfg.rewarded, TEST_REWARDED);
+        if (unit.isEmpty()) { cb.onFailed("no rewarded unit configured"); return; }
         loadingRewarded = true;
-        RewardedAd.load(context, id(cfg.rewarded, TEST_REWARDED), request(), new RewardedAdLoadCallback() {
+        RewardedAd.load(context, unit, request(), new RewardedAdLoadCallback() {
             @Override public void onAdLoaded(@NonNull RewardedAd ad) {
                 loadingRewarded = false;
                 rewarded = ad;
@@ -216,7 +226,9 @@ public final class AdmobProvider implements AdProvider {
                 .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_RIGHT)
                 .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_LANDSCAPE)
                 .build();
-        AdLoader loader = new AdLoader.Builder(activity, id(cfg.native_ad, TEST_NATIVE))
+        String unit = id(cfg.native_ad, TEST_NATIVE);
+        if (unit.isEmpty()) { cb.onFailed("no native unit configured"); return; }
+        AdLoader loader = new AdLoader.Builder(activity, unit)
                 .forNativeAd(ad -> {
                     if (activity.isFinishing() || activity.isDestroyed()) {
                         ad.destroy();

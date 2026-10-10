@@ -76,6 +76,9 @@ final class Response
 {
     public int $status;
     public array $payload;
+    /** Non-JSON body (HTML page, app-ads.txt). */
+    public ?string $raw = null;
+    public string $contentType = 'application/json; charset=utf-8';
 
     public function __construct(int $status, array $payload)
     {
@@ -88,6 +91,14 @@ final class Response
         return new self(200, ['ok' => true, 'data' => $data]);
     }
 
+    public static function raw(int $status, string $contentType, string $body): self
+    {
+        $r = new self($status, []);
+        $r->raw = $body;
+        $r->contentType = $contentType;
+        return $r;
+    }
+
     public static function error(int $status, string $message): self
     {
         return new self($status, ['ok' => false, 'error' => $message]);
@@ -96,6 +107,13 @@ final class Response
     public function send(array $allowedOrigins = []): void
     {
         http_response_code($this->status);
+        if ($this->raw !== null) {
+            header('Content-Type: ' . $this->contentType);
+            header('Cache-Control: public, max-age=300');
+            header('X-Content-Type-Options: nosniff');
+            echo $this->raw;
+            return;
+        }
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

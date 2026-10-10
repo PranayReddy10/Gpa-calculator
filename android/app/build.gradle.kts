@@ -26,6 +26,34 @@ val admobAppId: String = setting("ADMOB_APP_ID", "").let { id ->
     }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Release safety: a Play Store build must not ship with test or placeholder settings.
+// Checked right before any release build (bundleRelease / assembleRelease); debug builds are
+// never blocked. For a local test of the minified build only: -PALLOW_UNSAFE_RELEASE=true
+// (never upload such a build).
+// ---------------------------------------------------------------------------------------------
+val releaseStoreFile: String = setting("RELEASE_STORE_FILE", "")
+val releaseProblems: List<String> = buildList {
+    val admob = setting("ADMOB_APP_ID", "")
+    if (!Regex("""^ca-app-pub-\d{16}~\d{10}$""").matches(admob) || admob == admobTestAppId)
+        add("ADMOB_APP_ID must be your real AdMob app ID (AdMob > Apps > App settings, contains '~'), not Google's test ID.")
+    val key = setting("APP_API_KEY", "")
+    if (key.isEmpty() || key.startsWith("change-me") || key.length < 16)
+        add("APP_API_KEY must be set to the same long random value as APP_API_KEY in backend/config.php.")
+    val api = setting("API_BASE_URL", "https://gpa.jntubooks.in/")
+    if (!api.startsWith("https://") || api.contains("example.com"))
+        add("API_BASE_URL must be your https backend URL, e.g. https://gpa.jntubooks.in/")
+    if (releaseStoreFile.isEmpty()) {
+        add("RELEASE_STORE_FILE is not set: point it at the keystore you use for Google Play (upload key).")
+    } else {
+        if (!rootProject.file(releaseStoreFile).exists()) add("RELEASE_STORE_FILE '$releaseStoreFile' does not exist.")
+        if (setting("RELEASE_STORE_PASSWORD", "").isEmpty()) add("RELEASE_STORE_PASSWORD is empty.")
+        if (setting("RELEASE_KEY_ALIAS", "").isEmpty()) add("RELEASE_KEY_ALIAS is empty.")
+        if (setting("RELEASE_KEY_PASSWORD", "").isEmpty()) add("RELEASE_KEY_PASSWORD is empty.")
+    }
+}
+val allowUnsafeRelease: Boolean = setting("ALLOW_UNSAFE_RELEASE", "false") == "true"
+
 android {
     namespace = "com.gpa.calculator"
     compileSdk = 36
@@ -35,9 +63,10 @@ android {
         applicationId = "com.gpa.calculator"
         minSdk = 26
         targetSdk = 36
-        // Must be higher than the versionCode currently live on Google Play.
-        versionCode = 100
-        versionName = "2.0.0"
+        // Must be higher than the versionCode currently live on Google Play (Play Console >
+        // App bundle explorer). Override per release in local.properties: VERSION_CODE / VERSION_NAME.
+        versionCode = setting("VERSION_CODE", "100").toInt()
+        versionName = setting("VERSION_NAME", "2.0.0")
 
         // --- Build-time configuration: set these in android/local.properties (see local.properties.sample) ---
         // Backend base URL where backend/ is deployed (production: https://gpa.jntubooks.in/)
@@ -60,8 +89,23 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            if (releaseStoreFile.isNotEmpty() && rootProject.file(releaseStoreFile).exists()) {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = setting("RELEASE_STORE_PASSWORD", "")
+                keyAlias = setting("RELEASE_KEY_ALIAS", "")
+                keyPassword = setting("RELEASE_KEY_PASSWORD", "")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseStoreFile.isNotEmpty() && rootProject.file(releaseStoreFile).exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -128,4 +172,22 @@ dependencies {
     implementation(libs.play.app.update)
 
     testImplementation(libs.junit)
+}
+
+// Fail fast before any release build if production settings are missing (see releaseProblems).
+// The task action captures only plain local values so it works with the configuration cache.
+tasks.configureEach {
+    if (name == "preReleaseBuild") {
+        val problems: List<String> = ArrayList(releaseProblems)
+        val allowUnsafe: Boolean = allowUnsafeRelease
+        doFirst {
+            if (problems.isNotEmpty() && !allowUnsafe) {
+                throw GradleException(
+                    "Release build blocked — fix these in android/local.properties:\n" +
+                        problems.joinToString("\n") { "  • $it" } +
+                        "\n(See RELEASE.md. Debug builds are not affected.)"
+                )
+            }
+        }
+    }
 }

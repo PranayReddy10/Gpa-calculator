@@ -53,6 +53,7 @@
   <a data-tab="dash" class="active">Dashboard</a>
   <a data-tab="ads">Ads</a>
   <a data-tab="appcfg">App</a>
+  <a data-tab="privacy">Privacy</a>
   <a data-tab="push">Notifications</a>
   <a data-tab="devices">Devices</a>
   <a data-tab="events">Events</a>
@@ -148,6 +149,9 @@
         </div>
         <small>Meta has no app-open format and no compact native; those slots fall through to the next network.</small>
       </div>
+      <h3>app-ads.txt</h3>
+      <small>Published at <a id="appAdsLink" target="_blank" rel="noopener"></a>. The Google line is generated from the AdMob app ID above. Add AppLovin / Meta lines from their dashboards here, one per line.</small>
+      <textarea id="ads.app_ads_txt" placeholder="applovin.com, xxxxxxxx, DIRECT&#10;facebook.com, 1234567890, RESELLER, c3e20eee3f780d68"></textarea>
       <p><button class="primary" id="saveAds">Save ad settings</button> <small>Apps pick up changes on next launch (config is cached up to 6 hours).</small></p>
     </div>
   </div>
@@ -163,9 +167,10 @@
       </div>
       <label>Update message</label><input type="text" id="app.update_message">
       <div class="row">
-        <div><label>Privacy policy URL</label><input type="text" id="app.privacy_url"></div>
+        <div><label>Privacy policy URL (leave empty to use this server's /privacy page)</label><input type="text" id="app.privacy_url"></div>
         <div><label>Terms URL</label><input type="text" id="app.terms_url"></div>
         <div><label>Contact email</label><input type="text" id="app.contact_email"></div>
+        <div><label>Publisher / developer name (used in the privacy policy)</label><input type="text" id="app.publisher_name"></div>
         <div><label>More apps URL</label><input type="text" id="app.more_apps_url"></div>
       </div>
       <label>Share text</label><textarea id="app.share_text"></textarea>
@@ -216,6 +221,24 @@
       </div>
       <label>Currency rates API (Frankfurter / ECB JSON format; the app appends ?from=USD)</label><input type="text" id="features.currency_api_url">
       <p><button class="primary" id="saveApp">Save app settings</button></p>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------ Privacy policy -->
+  <div id="tab-privacy" class="hidden">
+    <div class="card">
+      <h2>Privacy policy</h2>
+      <div id="privacyMsg" class="msg"></div>
+      <p><small>Public page: <a id="privacyLink" target="_blank" rel="noopener"></a> — use this URL in Google Play Console (App content &gt; Privacy policy). The app's Settings &gt; Privacy policy opens it too.<br>
+      Last updated: <b id="privacyUpdated">—</b> (set automatically when the text changes). Leave the text empty to publish the generated default policy.</small></p>
+      <p><small>Formatting: <code># Title</code>, <code>## Section</code>, <code>### Sub-section</code>, lines starting with <code>- </code> become a list, <code>**bold**</code>, <code>[text](https://link)</code>. Write <code>{{updated}}</code> to insert the last-updated date.</small></p>
+      <textarea id="app.privacy_policy" style="min-height:460px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px"></textarea>
+      <p>
+        <button class="primary" id="savePrivacy">Save privacy policy</button>
+        <button class="ghost" id="loadPrivacyTemplate">Load default template</button>
+        <button class="ghost" id="previewPrivacy">Preview</button>
+      </p>
+      <small>Before publishing: set your contact email and publisher name in the App tab, then load the template so they are filled in. Review it so it matches your situation.</small>
     </div>
   </div>
 
@@ -316,9 +339,9 @@
   document.querySelectorAll('nav a').forEach(a => a.onclick = () => showTab(a.dataset.tab));
   function showTab(t){
     document.querySelectorAll('nav a').forEach(a => a.classList.toggle('active', a.dataset.tab === t));
-    ['dash','ads','appcfg','push','devices','events','account'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
+    ['dash','ads','appcfg','privacy','push','devices','events','account'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
     if (t === 'dash') loadStats();
-    if (t === 'ads' || t === 'appcfg') loadConfig();
+    if (t === 'ads' || t === 'appcfg' || t === 'privacy') loadConfig();
     if (t === 'devices') loadDevices();
     if (t === 'events') loadEvents();
     if (t === 'push') loadPush();
@@ -355,7 +378,7 @@
   function get(obj, path){ return path.split('.').reduce((o,k) => (o == null ? undefined : o[k]), obj); }
   function set(obj, path, v){ const ks = path.split('.'); let o = obj; ks.slice(0,-1).forEach(k => { if (!o[k]) o[k] = {}; o = o[k]; }); o[ks[ks.length-1]] = v; }
   function fillForm(){
-    document.querySelectorAll('#tab-ads [id*="."], #tab-appcfg [id*="."]').forEach(el => {
+    document.querySelectorAll('#tab-ads [id*="."], #tab-appcfg [id*="."], #tab-privacy [id*="."]').forEach(el => {
       const v = get(config, el.id);
       if (el.type === 'checkbox') el.checked = !!v;
       else if (Array.isArray(v)) el.value = v.join(', ');
@@ -375,9 +398,26 @@
     delete out.updated_at;
     return out;
   }
-  async function loadConfig(){ try { config = await api('GET', '/admin/config'); fillForm(); } catch(e){ alert(e.message); } }
+  async function loadConfig(){ try { config = await api('GET', '/admin/config'); fillForm(); showPrivacyMeta(); } catch(e){ alert(e.message); } }
   $('saveAds').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('ads')); fillForm(); msg('adsMsg', 'Saved. Apps will use the new settings on next launch.', true); } catch(e){ msg('adsMsg', e.message, false); } };
   $('saveApp').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('appcfg')); fillForm(); msg('appMsg', 'Saved.', true); } catch(e){ msg('appMsg', e.message, false); } };
+
+  // ---- privacy policy
+  const SITE = location.origin + location.pathname.replace(/\/admin\/?[^/]*$/, '');
+  $('privacyLink').textContent = $('privacyLink').href = SITE + '/privacy';
+  $('appAdsLink').textContent = $('appAdsLink').href = SITE + '/app-ads.txt';
+  $('savePrivacy').onclick = async () => {
+    try { config = await api('PUT', '/admin/config', readForm('privacy')); fillForm(); showPrivacyMeta(); msg('privacyMsg', 'Saved. The public page is updated.', true); }
+    catch(e){ msg('privacyMsg', e.message, false); }
+  };
+  $('loadPrivacyTemplate').onclick = async () => {
+    const ta = $('app.privacy_policy');
+    if (ta.value.trim() && !confirm('Replace the current text with the default template?')) return;
+    try { const d = await api('GET', '/admin/privacy/template'); ta.value = d.markdown; msg('privacyMsg', 'Template loaded — review it, then Save.', true); }
+    catch(e){ msg('privacyMsg', e.message, false); }
+  };
+  $('previewPrivacy').onclick = () => window.open(SITE + '/privacy', '_blank', 'noopener');
+  function showPrivacyMeta(){ $('privacyUpdated').textContent = (config && config.app.privacy_updated) || 'not yet (default policy in use)'; }
 
   // ---- push notifications
   $('pOpen').onchange = () => { $('pCalcWrap').classList.toggle('hidden', $('pOpen').value !== 'calc'); $('pUrlWrap').classList.toggle('hidden', $('pOpen').value !== 'url'); };

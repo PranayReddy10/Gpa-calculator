@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icons are looked up by name at runtime (Icons.resolve / getIdentifier); never shrink them away. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_*,@drawable/sc_glyph_*" />

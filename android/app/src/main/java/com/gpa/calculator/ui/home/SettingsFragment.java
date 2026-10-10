@@ -145,7 +145,8 @@ public class SettingsFragment extends Fragment {
             Analytics.get(requireContext()).log("share_app");
         });
         b.rowPrivacy.setOnClickListener(v -> {
-            String url = cfg.app.privacy_url == null || cfg.app.privacy_url.isEmpty() ? "https://play.google.com/store/apps/details?id=" + requireContext().getPackageName() : cfg.app.privacy_url;
+            String url = cfg.app.privacy_url == null || cfg.app.privacy_url.isEmpty()
+                    ? com.gpa.calculator.data.remote.ApiClient.baseUrl() + "privacy" : cfg.app.privacy_url;
             try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception ignored) {}
         });
         b.rowContact.setVisibility(cfg.app.contact_email == null || cfg.app.contact_email.isEmpty() ? View.GONE : View.VISIBLE);
@@ -199,6 +200,7 @@ public class SettingsFragment extends Fragment {
         }
         if (store.lastError() != null) sb.append("Last error: ").append(store.lastError()).append('\n');
         sb.append("Device registered: ").append(Prefs.get(c).deviceToken() != null ? "yes" : "no").append('\n');
+        sb.append("Device ID: ").append(Prefs.get(c).deviceId()).append('\n');
         sb.append("\nADS\n").append(AdsManager.get(c).diagnostics()).append('\n');
         sb.append("\nPUSH\n");
         sb.append("OneSignal: ").append(com.gpa.calculator.push.PushManager.isAvailable() ? "started" : "off (no app ID)")
