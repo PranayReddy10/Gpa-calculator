@@ -1,2 +1,14 @@
-# Copy to local.properties (never commit). Android Studio fills sdk.dir automatically.
-sdk.dir=/path/to/Android/sdk
+# Copy these lines into android/local.properties (Android Studio already created that file with sdk.dir).
+# local.properties is ignored by git, so your keys never get committed.
+# After editing: File > Sync Project with Gradle Files, then Build > Rebuild Project.
+
+# Where backend/ is deployed (keep the trailing slash)
+API_BASE_URL=https://yourdomain.com/gpa-api/
+# Must be exactly the same as APP_API_KEY in backend/config.php
+APP_API_KEY=paste-the-same-random-value-here
+# AdMob app ID from AdMob > Apps > App settings (contains a ~). Leave out to use Google's test ID.
+ADMOB_APP_ID=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
+# Optional: AppLovin MAX SDK key. Leave empty to turn MAX off.
+APPLOVIN_SDK_KEY=
+# Optional: OneSignal app ID (can also be set in the admin panel App tab)
+ONESIGNAL_APP_ID=
