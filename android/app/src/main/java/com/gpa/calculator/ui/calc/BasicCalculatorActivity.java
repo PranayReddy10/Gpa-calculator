@@ -66,7 +66,7 @@ public class BasicCalculatorActivity extends CalcActivityBase {
 
     private void buildKeys() {
         int onSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, 0);
-        int primary = MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimary, 0);
+        int primary = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, 0);
         int onPrimary = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnPrimary, 0);
         int surfHigh = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceContainerHigh, 0);
         int secCont = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSecondaryContainer, 0);
