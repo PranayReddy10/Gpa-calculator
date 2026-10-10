@@ -17,7 +17,7 @@ import java.util.List;
  * The admin panel edits this config; the app picks changes up on next launch / every 6 hours.
  */
 public final class ConfigStore {
-    private static final String TAG = "ConfigStore";
+    private static final String TAG = "GPAApi";
     private static final String KEY = "remote_config_json";
     private static final long REFRESH_MS = 6L * 60 * 60 * 1000;
     private static ConfigStore instance;
@@ -31,6 +31,10 @@ public final class ConfigStore {
     private RemoteConfig config;
     private final List<Listener> listeners = new ArrayList<>();
     private boolean fetching;
+    /** Last refresh outcome, for the diagnostics screen. */
+    private String lastError;
+    private long lastAttemptAt;
+    private final List<Runnable> pendingDone = new ArrayList<>();
 
     private ConfigStore(Context c) {
         app = c.getApplicationContext();
@@ -65,12 +69,21 @@ public final class ConfigStore {
         if (isStale()) refresh();
     }
 
-    public void refresh() {
+    public String lastError() { return lastError; }
+    public long lastAttemptAt() { return lastAttemptAt; }
+
+    public void refresh() { refresh(null); }
+
+    /** @param done runs on the main thread after success or failure */
+    public void refresh(@androidx.annotation.Nullable Runnable done) {
+        if (done != null) pendingDone.add(done);
         if (fetching) return;
         fetching = true;
+        lastAttemptAt = System.currentTimeMillis();
         ApiClient.get(app).get("config", new ApiClient.Result() {
             @Override public void onSuccess(com.google.gson.JsonElement data) {
                 fetching = false;
+                lastError = null;
                 try {
                     RemoteConfig rc = gson.fromJson(data, RemoteConfig.class);
                     if (rc == null) return;
@@ -78,16 +91,27 @@ public final class ConfigStore {
                     config = sanitize(rc);
                     Prefs.get(app).putString(KEY, gson.toJson(config));
                     for (Listener l : new ArrayList<>(listeners)) l.onConfigChanged(config);
+                    Log.i(TAG, "config loaded from " + ApiClient.baseUrl());
                 } catch (Exception e) {
+                    lastError = "Bad config JSON: " + e.getMessage();
                     Log.w(TAG, "config parse failed: " + e.getMessage());
                 }
+                finishPending();
             }
 
             @Override public void onError(String message) {
                 fetching = false;
-                Log.i(TAG, "config refresh failed: " + message);
+                lastError = message;
+                Log.w(TAG, "config refresh failed (" + ApiClient.baseUrl() + "): " + message);
+                finishPending();
             }
         });
+    }
+
+    private void finishPending() {
+        List<Runnable> l = new ArrayList<>(pendingDone);
+        pendingDone.clear();
+        for (Runnable r : l) r.run();
     }
 
     /** Gson leaves missing nested objects null; replace with defaults so callers never NPE. */

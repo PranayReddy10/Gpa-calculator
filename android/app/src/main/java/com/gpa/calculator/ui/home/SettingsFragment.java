@@ -148,6 +148,7 @@ public class SettingsFragment extends Fragment {
             try { startActivity(i); } catch (Exception ignored) {}
         });
         b.version.setText(getString(R.string.settings_version, BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")"));
+        b.version.setOnLongClickListener(v -> { showDiagnostics(); return true; });
         Anim.staggerChildren((ViewGroup) b.version.getParent(), 40);
     }
 
@@ -170,5 +171,46 @@ public class SettingsFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         b = null;
+    }
+
+    // ------------------------------------------------------------------ diagnostics (long-press version)
+    private String diagnosticsText() {
+        android.content.Context c = requireContext();
+        com.gpa.calculator.data.remote.ConfigStore store = com.gpa.calculator.data.remote.ConfigStore.get(c);
+        RemoteConfig cfg = store.config();
+        StringBuilder sb = new StringBuilder();
+        sb.append("SERVER\n");
+        sb.append("URL: ").append(com.gpa.calculator.data.remote.ApiClient.baseUrl()).append('\n');
+        sb.append("App key: ").append(BuildConfig.APP_API_KEY.startsWith("change-me") ? "NOT SET (still the default)" : "set").append('\n');
+        if (cfg.fetched_at > 0) {
+            sb.append("Config: loaded ").append(android.text.format.DateUtils.getRelativeTimeSpanString(cfg.fetched_at)).append('\n');
+        } else {
+            sb.append("Config: never loaded (using built-in defaults)\n");
+        }
+        if (store.lastError() != null) sb.append("Last error: ").append(store.lastError()).append('\n');
+        sb.append("Device registered: ").append(Prefs.get(c).deviceToken() != null ? "yes" : "no").append('\n');
+        sb.append("\nADS\n").append(AdsManager.get(c).diagnostics()).append('\n');
+        sb.append("\nPUSH\n");
+        sb.append("OneSignal: ").append(com.gpa.calculator.push.PushManager.isAvailable() ? "started" : "off (no app ID)")
+                .append(", permission: ").append(com.gpa.calculator.push.PushManager.hasPermission() ? "granted" : "not granted").append('\n');
+        sb.append("\nApp ").append(BuildConfig.VERSION_NAME).append(" (").append(BuildConfig.VERSION_CODE).append(")");
+        return sb.toString();
+    }
+
+    private void showDiagnostics() {
+        androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Diagnostics")
+                .setMessage(diagnosticsText())
+                .setPositiveButton(R.string.ok, null)
+                .setNeutralButton("Test server", null)
+                .setNegativeButton(R.string.copy, (x, w) -> ShareUtil.copy(b.getRoot(), diagnosticsText()))
+                .show();
+        // keep the dialog open while testing and refresh its text with the result
+        d.getButton(android.content.DialogInterface.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            d.setMessage("Contacting " + com.gpa.calculator.data.remote.ApiClient.baseUrl() + " …");
+            com.gpa.calculator.data.remote.ConfigStore.get(requireContext()).refresh(() -> {
+                if (isAdded() && d.isShowing()) d.setMessage(diagnosticsText());
+            });
+        });
     }
 }

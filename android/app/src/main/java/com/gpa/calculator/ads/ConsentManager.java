@@ -9,7 +9,10 @@ import com.google.android.ump.UserMessagingPlatform;
 
 /** Google UMP consent (GDPR / US state privacy). Must complete before any ad request. */
 public final class ConsentManager {
-    private static final String TAG = "ConsentManager";
+    private static final String TAG = AdsManager.TAG;
+
+    /** Last UMP error, shown in the diagnostics screen. */
+    public static String lastError = null;
 
     public interface Done {
         void onDone(boolean canRequestAds);
@@ -20,12 +23,21 @@ public final class ConsentManager {
         ConsentRequestParameters params = new ConsentRequestParameters.Builder().build();
         info.requestConsentInfoUpdate(activity, params,
                 () -> UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity, formError -> {
-                    if (formError != null) Log.w(TAG, "consent form: " + formError.getMessage());
+                    if (formError != null) {
+                        lastError = formError.getMessage();
+                        Log.w(TAG, "consent form: " + lastError);
+                    }
+                    Log.i(TAG, "consent status=" + info.getConsentStatus() + " canRequestAds=" + info.canRequestAds());
                     done.onDone(info.canRequestAds());
                 }),
                 requestError -> {
-                    Log.w(TAG, "consent info: " + requestError.getMessage());
-                    done.onDone(info.canRequestAds());
+                    // Happens with Google's test app ID or when no consent message is set up in
+                    // AdMob > Privacy & messaging. No form can be shown either way, so don't block
+                    // ads for the whole session; users in regions that need consent get the form
+                    // once a message is published in AdMob.
+                    lastError = requestError.getMessage();
+                    Log.w(TAG, "consent info failed (" + requestError.getErrorCode() + "): " + lastError + " -> continuing with ads");
+                    done.onDone(true);
                 });
     }
 

@@ -33,7 +33,8 @@ import java.util.Map;
  * specific; see the AdProvider implementations.
  */
 public final class AdsManager implements ConfigStore.Listener {
-    private static final String TAG = "AdsManager";
+    /** Filter Logcat by this tag to follow every ad decision. */
+    public static final String TAG = "GPAAds";
     private static AdsManager instance;
 
     private final Context app;
@@ -44,6 +45,8 @@ public final class AdsManager implements ConfigStore.Listener {
     private long lastInterstitialAt;
     private long lastAppOpenAt;
     private boolean fullScreenShowing;
+    /** Placements requested before any network finished initialising; run as soon as one does. */
+    private final List<Runnable> whenReady = new ArrayList<>();
     private int calcsSinceInterstitial;
     private int opensSinceInterstitial;
     @Nullable private Activity currentActivity;
@@ -85,6 +88,7 @@ public final class AdsManager implements ConfigStore.Listener {
     /** Call from the first visible Activity after consent has been gathered. */
     public void start(boolean consentGranted) {
         consentOk = consentGranted;
+        Log.i(TAG, "start: consent=" + consentGranted + ", config fetched=" + (ConfigStore.get(app).config().fetched_at > 0));
         if (started) return;
         started = true;
         initProviders();
@@ -96,18 +100,67 @@ public final class AdsManager implements ConfigStore.Listener {
     }
 
     private void initProviders() {
-        if (!consentOk) return;
+        if (!consentOk) { Log.i(TAG, "not starting ads: consent not given"); return; }
         RemoteConfig.Ads ads = cfg();
-        if (!ads.enabled) return;
+        if (!ads.enabled) { Log.i(TAG, "not starting ads: ads disabled in admin panel"); return; }
+        int started = 0;
         for (String name : ads.priority) {
             AdProvider p = providers.get(name);
             RemoteConfig.Network n = ads.network(name);
             if (p == null || n == null || !n.enabled) continue;
-            p.init(app, n, ads.test_mode, () -> {
+            started++;
+            Log.i(TAG, "initialising " + name + (ads.test_mode ? " (test mode)" : ""));
+            p.init(app, n, ads.test_mode, () -> main.post(() -> {
+                Log.i(TAG, name + " ready");
                 preloadInterstitial(p);
                 preloadAppOpen(p);
-            });
+                runWhenReady();
+            }));
         }
+        if (started == 0) Log.i(TAG, "not starting ads: no network enabled (priority " + ads.priority + ")");
+    }
+
+    private void runWhenReady() {
+        if (whenReady.isEmpty()) return;
+        List<Runnable> pending = new ArrayList<>(whenReady);
+        whenReady.clear();
+        for (Runnable r : pending) r.run();
+    }
+
+    /** Runs now if a network is ready, otherwise as soon as the first one finishes initialising. */
+    private void whenAnyReady(Runnable r) {
+        if (!ordered().isEmpty()) main.post(r);
+        else whenReady.add(r);
+    }
+
+    private String skipReason() {
+        if (!started) return "ads not started yet (waiting for consent check)";
+        if (!consentOk) return "no consent";
+        if (!cfg().enabled) return "ads disabled in admin panel";
+        if (isAdFree()) return "ad-free reward active";
+        return "";
+    }
+
+    /** Human-readable state for the diagnostics screen. */
+    public String diagnostics() {
+        RemoteConfig.Ads a = cfg();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Ads enabled: ").append(a.enabled).append(a.test_mode ? " (test mode)" : "").append('\n');
+        sb.append("Started: ").append(started).append(", consent ok: ").append(consentOk).append('\n');
+        if (ConsentManager.lastError != null) sb.append("Consent error: ").append(ConsentManager.lastError).append('\n');
+        if (isAdFree()) sb.append("Ad-free for ").append(adFreeRemainingMs() / 60000).append(" min\n");
+        sb.append("Priority: ").append(a.priority).append('\n');
+        for (String name : new String[]{"admob", "max", "meta"}) {
+            RemoteConfig.Network n = a.network(name);
+            AdProvider p = providers.get(name);
+            sb.append("• ").append(name).append(": ").append(n != null && n.enabled ? "on" : "off")
+                    .append(p != null && p.isInitialized() ? ", ready" : ", not initialised");
+            if (p != null) sb.append(", interstitial ").append(p.isInterstitialReady() ? "loaded" : "not loaded");
+            sb.append('\n');
+        }
+        sb.append("Formats: banner ").append(a.banner_enabled).append(", native ").append(a.native_enabled)
+                .append(", interstitial ").append(a.interstitial_enabled).append(", app open ").append(a.app_open_enabled);
+        return sb.toString();
     }
 
     /** True while an interstitial, app-open or rewarded ad is on screen. */
@@ -161,16 +214,21 @@ public final class AdsManager implements ConfigStore.Listener {
         boolean placementOn = "home".equals(placement) ? ads.banner_on_home
                 : "result".equals(placement) ? ads.banner_on_result : ads.banner_on_calculator;
         if (!adsAllowed() || !ads.banner_enabled || !placementOn) {
+            Log.i(TAG, "banner " + placement + " skipped: " + skipReason() + (ads.banner_enabled ? "" : " banners off") + (placementOn ? "" : " placement off"));
             container.setVisibility(View.GONE);
             return handle;
         }
-        container.post(() -> tryBanner(activity, container, ordered(), 0, handle, placement));
+        whenAnyReady(() -> {
+            if (!handle.cancelled && !activity.isFinishing() && !activity.isDestroyed())
+                tryBanner(activity, container, ordered(), 0, handle, placement);
+        });
         return handle;
     }
 
     private void tryBanner(Activity activity, ViewGroup container, List<AdProvider> list, int idx, BannerHandle handle, String placement) {
         if (handle.cancelled || activity.isFinishing() || activity.isDestroyed()) return;
         if (idx >= list.size()) {
+            Log.i(TAG, "banner " + placement + ": no network filled");
             container.setVisibility(View.GONE);
             return;
         }
@@ -292,13 +350,20 @@ public final class AdsManager implements ConfigStore.Listener {
         NativeHandle handle = new NativeHandle();
         container.setVisibility(View.GONE);
         RemoteConfig.Ads ads = cfg();
-        if (!adsAllowed() || !ads.native_enabled || !ads.native_in_calculators) return handle;
-        tryNative(activity, container, ordered(), 0, handle, placement, compact);
+        if (!adsAllowed() || !ads.native_enabled || !ads.native_in_calculators) {
+            Log.i(TAG, "native " + placement + " skipped: " + skipReason() + (ads.native_enabled && ads.native_in_calculators ? "" : " native off"));
+            return handle;
+        }
+        whenAnyReady(() -> {
+            if (!handle.cancelled && !activity.isFinishing() && !activity.isDestroyed())
+                tryNative(activity, container, ordered(), 0, handle, placement, compact);
+        });
         return handle;
     }
 
     private void tryNative(Activity activity, ViewGroup container, List<AdProvider> list, int idx, NativeHandle handle, String placement, boolean compact) {
-        if (handle.cancelled || activity.isFinishing() || activity.isDestroyed() || idx >= list.size()) return;
+        if (handle.cancelled || activity.isFinishing() || activity.isDestroyed()) return;
+        if (idx >= list.size()) { Log.i(TAG, "native " + placement + ": no network filled"); return; }
         AdProvider p = list.get(idx);
         p.loadNative(activity, container, compact, new AdProvider.NativeCallback() {
             @Override public void onLoaded(View adView) {
