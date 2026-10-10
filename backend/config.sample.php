@@ -28,6 +28,10 @@ return [
     // ---- If the admin page is hosted on another domain, list it here (CORS). Same-origin needs nothing.
     'ALLOWED_ORIGINS' => [],
 
+    // ---- OneSignal push (dashboard > Settings > Keys & IDs). The API key stays on the server.
+    'ONESIGNAL_APP_ID'  => '',
+    'ONESIGNAL_API_KEY' => '',
+
     // ---- Retention: raw events older than this many days are purged opportunistically
     'EVENT_RETENTION_DAYS' => 90,
 ];

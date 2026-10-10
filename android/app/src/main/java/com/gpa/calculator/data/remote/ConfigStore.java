@@ -99,7 +99,7 @@ public final class ConfigStore {
         if (rc.ads.meta == null) rc.ads.meta = new RemoteConfig.Network();
         if (rc.ads.priority == null || rc.ads.priority.isEmpty()) rc.ads.priority = d.ads.priority;
         if (rc.app == null) rc.app = d.app;
-        if (rc.app.announcement == null) rc.app.announcement = new RemoteConfig.Announcement();
+        if (rc.app.popup == null) rc.app.popup = new RemoteConfig.Popup();
         if (rc.features == null) rc.features = d.features;
         return rc;
     }

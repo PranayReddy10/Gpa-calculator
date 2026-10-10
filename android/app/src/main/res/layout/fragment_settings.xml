@@ -173,6 +173,17 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
+                    <LinearLayout android:id="@+id/row_notifications" style="@style/SettingsRow">
+                        <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_notifications" />
+                        <TextView style="@style/SettingsLabel" android:text="@string/settings_notifications" />
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switch_notifications"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <View android:id="@+id/divider_notifications" style="@style/SettingsDivider" />
+
                     <LinearLayout style="@style/SettingsRow">
                         <ImageView style="@style/SettingsIcon" android:src="@drawable/ic_history" />
                         <TextView style="@style/SettingsLabel" android:text="@string/settings_save_history" />

@@ -20,6 +20,11 @@ public final class CalcLauncher {
     private CalcLauncher() {}
 
     public static void open(Activity activity, @Nullable View sharedView, Calculator calc, @Nullable String inputsJson) {
+        open(activity, sharedView, calc, inputsJson, true);
+    }
+
+    /** @param allowAd false skips the "on open" interstitial (push deep links, pop-up buttons). */
+    public static void open(Activity activity, @Nullable View sharedView, Calculator calc, @Nullable String inputsJson, boolean allowAd) {
         Class<?> target;
         switch (calc.screen()) {
             case GRADES: target = GradeCalculatorActivity.class; break;
@@ -31,7 +36,7 @@ public final class CalcLauncher {
         Intent i = new Intent(activity, target).putExtra(EXTRA_ID, calc.id());
         if (inputsJson != null) i.putExtra(EXTRA_INPUTS, inputsJson);
         Analytics.get(activity).log("calc_open", "calc", calc.id());
-        AdsManager.get(activity).onCalculatorOpen(activity, () -> {
+        Runnable go = () -> {
             if (activity.isFinishing() || activity.isDestroyed()) return;
             if (sharedView != null && sharedView.isAttachedToWindow()) {
                 ActivityOptions o = ActivityOptions.makeSceneTransitionAnimation(activity, sharedView, SHARED_NAME);
@@ -39,6 +44,8 @@ public final class CalcLauncher {
             } else {
                 activity.startActivity(i);
             }
-        });
+        };
+        if (allowAd) AdsManager.get(activity).onCalculatorOpen(activity, go);
+        else go.run();
     }
 }

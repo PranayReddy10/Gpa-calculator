@@ -146,9 +146,6 @@ final class AdminController
         $page = max(1, (int)($r->query['page'] ?? 1));
         $per = 50;
         $rows = Db::rows('SELECT device_id, manufacturer, model, os_version, app_version, app_version_code, country, language, first_seen, last_seen, open_count FROM devices ORDER BY last_seen DESC LIMIT ' . $per . ' OFFSET ' . (($page - 1) * $per));
-        foreach ($rows as &$row) {
-            $row['device_id'] = substr((string)$row['device_id'], 0, 8) . '…';
-        }
         return Response::ok(['page' => $page, 'per_page' => $per, 'total' => (int)Db::value('SELECT COUNT(*) FROM devices'), 'items' => $rows]);
     }
 
@@ -165,5 +162,29 @@ final class AdminController
         foreach ($rows as &$row) $row['device_id'] = substr((string)$row['device_id'], 0, 8) . '…';
         $names = Db::rows('SELECT name, COUNT(*) AS n FROM events WHERE ts >= ? GROUP BY name ORDER BY n DESC', [time() - 7 * 86400]);
         return Response::ok(['items' => $rows, 'names' => $names]);
+    }
+
+    // ---------------------------------------------------------------- push notifications
+    public static function pushStatus(Request $r): Response
+    {
+        Auth::requireAdmin($r);
+        return Response::ok([
+            'configured' => \Gpa\Push::isConfigured(),
+            'app_id' => \Gpa\Push::appId(),
+            'has_api_key' => (string)Db::config('ONESIGNAL_API_KEY', '') !== '',
+            'segments' => \Gpa\Push::SEGMENTS,
+        ]);
+    }
+
+    public static function pushSend(Request $r): Response
+    {
+        $a = Auth::requireAdmin($r);
+        return Response::ok(\Gpa\Push::send($r->body, (string)$a['username']));
+    }
+
+    public static function pushHistory(Request $r): Response
+    {
+        Auth::requireAdmin($r);
+        return Response::ok(\Gpa\Push::history((int)($r->query['limit'] ?? 50)));
     }
 }

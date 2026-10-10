@@ -58,6 +58,9 @@ final class App
         if ($p === '/api/v1/admin/stats' && $m === 'GET') return AdminController::stats($r);
         if ($p === '/api/v1/admin/devices' && $m === 'GET') return AdminController::devices($r);
         if ($p === '/api/v1/admin/events' && $m === 'GET') return AdminController::events($r);
+        if ($p === '/api/v1/admin/push/status' && $m === 'GET') return AdminController::pushStatus($r);
+        if ($p === '/api/v1/admin/push' && $m === 'GET') return AdminController::pushHistory($r);
+        if ($p === '/api/v1/admin/push' && $m === 'POST') return AdminController::pushSend($r);
 
         return Response::error(404, 'Not found: ' . $m . ' ' . $p);
     }

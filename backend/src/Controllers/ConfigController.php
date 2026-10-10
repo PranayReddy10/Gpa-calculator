@@ -17,6 +17,7 @@ final class ConfigController
         $cfg = AppConfig::load();
         // Secrets the client never needs are not exposed (admin sees them via the admin endpoint).
         unset($cfg['ads']['max']['sdk_key']);
+        if ($cfg['app']['onesignal_app_id'] === '') $cfg['app']['onesignal_app_id'] = (string)\Gpa\Db::config('ONESIGNAL_APP_ID', '');
         return Response::ok($cfg);
     }
 }

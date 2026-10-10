@@ -74,3 +74,18 @@ CREATE TABLE IF NOT EXISTS saved_calculations (
     deleted TINYINT NOT NULL DEFAULT 0,
     INDEX idx_saves_device (device_id, deleted, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS push_log (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(128) NULL,
+    message TEXT NOT NULL,
+    target VARCHAR(128) NOT NULL,
+    payload TEXT NULL,
+    onesignal_id VARCHAR(64) NULL,
+    recipients INT NULL,
+    status VARCHAR(16) NOT NULL,
+    error TEXT NULL,
+    admin VARCHAR(64) NULL,
+    created_at INT NOT NULL,
+    INDEX idx_push_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
