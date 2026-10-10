@@ -28,3 +28,17 @@
 
 # OneSignal ships its own consumer rules; keep notification payload models used via reflection
 -dontwarn com.onesignal.**
+
+# --- Data stored as JSON with Gson: field names must survive obfuscation, or saved data
+# --- (saved semesters, history results) would become unreadable after an update.
+-keep class com.gpa.calculator.data.Semesters$Semester { *; }
+-keep class com.gpa.calculator.core.CalcResult { *; }
+-keep,allowobfuscation,allowshrinking class com.google.gson.reflect.TypeToken
+-keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
+
+# --- Release builds: drop verbose/debug/info logging (warnings and errors are kept)
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}

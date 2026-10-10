@@ -29,6 +29,10 @@ function call(string $method, string $path, array $body = [], array $headers = [
     $res = App::handle(new Request($method, $path, $headers, $query, $body, '127.0.0.1'));
     return [$res->status, $res->payload];
 }
+function raw(string $path): array {
+    $res = App::handle(new Request('GET', $path, [], [], [], '127.0.0.1'));
+    return [$res->status, (string)$res->raw, $res->contentType];
+}
 function check(string $name, bool $cond, $detail = null): void {
     global $failures;
     if ($cond) { echo "  ok   $name\n"; return; }
@@ -220,6 +224,50 @@ check('push surfaces OneSignal errors', $s === 502 && strpos($p['error'], 'not s
 check('push history', $s === 200 && count($p['data']) === 3 && $p['data'][0]['status'] === 'failed' && $p['data'][2]['target'] === 'segment:Active Subscriptions', $p['data']);
 [$s, $p] = call('GET', '/api/v1/admin/push', [], []);
 check('push history needs admin', $s === 401);
+
+echo "privacy + app-ads.txt\n";
+// an old install that stored 120 ad-free minutes is corrected on load (and saving other tabs works)
+$row = json_decode(Db::value('SELECT json FROM app_config WHERE id = 1'), true);
+$row['ads']['reward_ad_free_minutes'] = 120;
+Db::exec('UPDATE app_config SET json = ? WHERE id = 1', [json_encode($row)]);
+[$s, $p] = call('GET', '/api/v1/config', [], $APP);
+check('legacy 120 ad-free minutes corrected to 10', $p['data']['ads']['reward_ad_free_minutes'] === 10, $p['data']['ads']['reward_ad_free_minutes'] ?? null);
+[$s, $html, $ct] = raw('/privacy');
+check('privacy page served without app key', $s === 200 && strpos($ct, 'text/html') === 0 && strpos($html, '<h1>Privacy Policy</h1>') !== false, $ct);
+check('default policy mentions ad partners + deletion', strpos($html, 'AdMob') !== false && strpos($html, 'Clear all') !== false && strpos($html, 'Children') !== false);
+[$s, $p] = call('GET', '/api/v1/admin/config', [], $ADM);
+$cfg = $p['data'];
+$cfg['app']['contact_email'] = 'support@jntubooks.in';
+$cfg['app']['publisher_name'] = 'JNTU Books';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+check('contact + publisher saved', $s === 200 && $p['data']['app']['privacy_updated'] === '', $p);
+[$s, $p] = call('GET', '/api/v1/admin/privacy/template', [], $ADM);
+check('template uses publisher + email', $s === 200 && strpos($p['data']['markdown'], 'JNTU Books') !== false && strpos($p['data']['markdown'], 'mailto:support@jntubooks.in') !== false);
+[$s, $p] = call('GET', '/api/v1/admin/privacy/template', [], []);
+check('template needs admin', $s === 401);
+$cfg = $p ? $cfg : $cfg;
+$cfg['app']['privacy_policy'] = "# My Policy\nUpdated {{updated}}\n\n## Data\n- one **bold** item\n- [link](https://example.com)\n\n<script>alert(1)</script> and javascript:[x](javascript:alert(1))";
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+check('custom policy saved and dated', $s === 200 && $p['data']['app']['privacy_updated'] === gmdate('Y-m-d'), $p['data']['app']['privacy_updated'] ?? null);
+[$s, $html] = raw('/privacy-policy');
+check('custom policy rendered', strpos($html, '<h1>My Policy</h1>') !== false && strpos($html, '<li>one <strong>bold</strong> item</li>') !== false && strpos($html, '<a href="https://example.com"') !== false && strpos($html, 'Updated ' . gmdate('Y-m-d')) !== false, $html);
+check('policy html is escaped (no script / js links)', strpos($html, '<script>') === false && strpos($html, '&lt;script&gt;') !== false && strpos($html, 'href="javascript') === false);
+$before = $p['data']['app']['privacy_updated'];
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+check('date unchanged when text unchanged', $p['data']['app']['privacy_updated'] === $before);
+[$s, $p] = call('GET', '/api/v1/config', [], $APP);
+check('app config omits policy text + app-ads lines', !isset($p['data']['app']['privacy_policy']) && !isset($p['data']['ads']['app_ads_txt']));
+$bad = $cfg; $bad['app']['contact_email'] = 'not-an-email';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $bad, $ADM);
+check('contact email validated', $s === 422);
+
+[$s, $txt, $ct] = raw('/app-ads.txt');
+check('app-ads.txt placeholder before AdMob id', $s === 200 && strpos($ct, 'text/plain') === 0 && strpos($txt, '# Add your AdMob app ID') === 0, $txt);
+$cfg['ads']['admob']['app_id'] = 'ca-app-pub-1234567890123456~9876543210';
+$cfg['ads']['app_ads_txt'] = "applovin.com, abc123, DIRECT\n\n  facebook.com, 999, RESELLER, c3e20eee3f780d68  \napplovin.com, abc123, DIRECT";
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+[$s, $txt] = raw('/app-ads.txt');
+check('app-ads.txt generated', $txt === "google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\napplovin.com, abc123, DIRECT\nfacebook.com, 999, RESELLER, c3e20eee3f780d68\n", $txt);
 [$s, $p] = call('GET', '/api/v1/nope');
 check('404', $s === 404);
 

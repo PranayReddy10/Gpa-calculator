@@ -37,6 +37,8 @@ final class AppConfig
                 'banner_on_home' => true,
                 'banner_on_calculator' => true,
                 'banner_on_result' => false,
+                // Extra lines for /app-ads.txt (AppLovin, Meta, ...). The AdMob line is generated.
+                'app_ads_txt' => '',
             ],
             'app' => [
                 'latest_version_code' => 0,
@@ -54,6 +56,10 @@ final class AppConfig
                 'contact_email' => '',
                 'share_text' => '',
                 'more_apps_url' => '',
+                'publisher_name' => '',
+                // Privacy policy shown at /privacy (simple Markdown). Empty = generated default.
+                'privacy_policy' => '',
+                'privacy_updated' => '',
             ],
             'features' => [
                 'cloud_save' => true,
@@ -75,14 +81,25 @@ final class AppConfig
         $row = Db::row('SELECT json, updated_at FROM app_config WHERE id = 1');
         $stored = $row ? json_decode($row['json'], true) : null;
         $cfg = self::merge(self::defaults(), is_array($stored) ? $stored : []);
+        // Older installs stored 120 ad-free minutes; anything outside 1–60 becomes the new default (10)
+        // so the app gets a sane value and saving other admin tabs is never blocked by it.
+        $m = $cfg['ads']['reward_ad_free_minutes'];
+        if ($m < 1 || $m > 60) $cfg['ads']['reward_ad_free_minutes'] = self::defaults()['ads']['reward_ad_free_minutes'];
         $cfg['updated_at'] = $row ? (int)$row['updated_at'] : 0;
         return $cfg;
     }
 
     public static function save(array $input): array
     {
+        $previous = self::load();
         $cfg = self::merge(self::defaults(), $input);
         unset($cfg['updated_at']);
+        // Stamp the policy's effective date whenever its text changes.
+        if ($cfg['app']['privacy_policy'] !== ($previous['app']['privacy_policy'] ?? '')) {
+            $cfg['app']['privacy_updated'] = gmdate('Y-m-d');
+        } else {
+            $cfg['app']['privacy_updated'] = $previous['app']['privacy_updated'] ?? '';
+        }
         self::validate($cfg);
         $json = json_encode($cfg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $exists = Db::value('SELECT COUNT(*) FROM app_config WHERE id = 1');
@@ -124,6 +141,9 @@ final class AppConfig
         if ($cfg['ads']['interstitial_every_n_calcs'] < 1) throw new HttpException(422, 'interstitial_every_n_calcs must be >= 1');
         if ($cfg['ads']['reward_ad_free_minutes'] < 1 || $cfg['ads']['reward_ad_free_minutes'] > 60) throw new HttpException(422, 'Ad-free minutes after a rewarded video must be between 1 and 60 (5–10 recommended)');
         if ($cfg['ads']['interstitial_open_every_n'] < 1) throw new HttpException(422, 'interstitial_open_every_n must be >= 1');
+        if (strlen($cfg['app']['privacy_policy']) > 60000) throw new HttpException(422, 'Privacy policy is too long (max 60,000 characters)');
+        if (strlen($cfg['ads']['app_ads_txt']) > 20000) throw new HttpException(422, 'app-ads.txt lines are too long');
+        if ($cfg['app']['contact_email'] !== '' && !filter_var($cfg['app']['contact_email'], FILTER_VALIDATE_EMAIL)) throw new HttpException(422, 'Contact email is not a valid email address');
         $p = $cfg['app']['popup'];
         if (!in_array($p['primary_action'], ['dismiss', 'url', 'calculator', 'rate', 'share', 'update', 'notifications'], true)) throw new HttpException(422, 'Unknown pop-up action: ' . $p['primary_action']);
         if (!in_array($p['frequency'], ['once', 'daily', 'every_open'], true)) throw new HttpException(422, 'Unknown pop-up frequency: ' . $p['frequency']);

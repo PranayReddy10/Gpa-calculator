@@ -47,7 +47,7 @@ public final class ConfigStore {
                 Log.w(TAG, "cached config invalid");
             }
         }
-        config = parsed != null ? sanitize(parsed) : new RemoteConfig();
+        config = parsed != null ? sanitize(parsed) : defaults();
     }
 
     public static synchronized ConfigStore get(Context c) {
@@ -112,6 +112,13 @@ public final class ConfigStore {
         List<Runnable> l = new ArrayList<>(pendingDone);
         pendingDone.clear();
         for (Runnable r : l) r.run();
+    }
+
+    /** Built-in config before the first download: test ads only in debug builds. */
+    private static RemoteConfig defaults() {
+        RemoteConfig c = new RemoteConfig();
+        c.ads.test_mode = com.gpa.calculator.BuildConfig.DEBUG;
+        return c;
     }
 
     /** Gson leaves missing nested objects null; replace with defaults so callers never NPE. */

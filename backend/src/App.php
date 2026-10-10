@@ -39,6 +39,10 @@ final class App
         if ($m === 'OPTIONS') return new Response(204, ['ok' => true]);
         if ($p === '/' || $p === '/api' || $p === '/api/v1') return Response::ok(['name' => 'GPA Calculator API', 'version' => 1, 'time' => time()]);
 
+        // ---- public pages (no app key): privacy policy for Google Play, app-ads.txt for AdMob
+        if ($m === 'GET' && in_array($p, ['/privacy', '/privacy-policy', '/privacy.html'], true)) return Pages::privacy();
+        if ($m === 'GET' && $p === '/app-ads.txt') return Pages::appAdsTxt();
+
         // ---- app endpoints
         if ($p === '/api/v1/config' && $m === 'GET') return ConfigController::get($r);
         if ($p === '/api/v1/device/register' && $m === 'POST') return DeviceController::register($r);
@@ -58,6 +62,7 @@ final class App
         if ($p === '/api/v1/admin/stats' && $m === 'GET') return AdminController::stats($r);
         if ($p === '/api/v1/admin/devices' && $m === 'GET') return AdminController::devices($r);
         if ($p === '/api/v1/admin/events' && $m === 'GET') return AdminController::events($r);
+        if ($p === '/api/v1/admin/privacy/template' && $m === 'GET') { Auth::requireAdmin($r); return Response::ok(['markdown' => Pages::defaultPrivacyMarkdown(AppConfig::load())]); }
         if ($p === '/api/v1/admin/push/status' && $m === 'GET') return AdminController::pushStatus($r);
         if ($p === '/api/v1/admin/push' && $m === 'GET') return AdminController::pushHistory($r);
         if ($p === '/api/v1/admin/push' && $m === 'POST') return AdminController::pushSend($r);
