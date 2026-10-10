@@ -137,7 +137,7 @@ public final class AdsManager implements ConfigStore.Listener {
         if (!started) return "ads not started yet (waiting for consent check)";
         if (!consentOk) return "no consent";
         if (!cfg().enabled) return "ads disabled in admin panel";
-        if (isAdFree()) return "ad-free reward active";
+        if (isAdFree()) return "ad-free reward active for " + (adFreeRemainingMs() / 60000 + 1) + " more min";
         return "";
     }
 
@@ -169,6 +169,12 @@ public final class AdsManager implements ConfigStore.Listener {
     // ------------------------------------------------------------------ gating
     public boolean isAdFree() {
         return Prefs.get(app).adFreeUntil() > System.currentTimeMillis();
+    }
+
+    /** Ends a rewarded ad-free period early (debug builds use this for testing). */
+    public void endAdFree() {
+        Prefs.get(app).setAdFreeUntil(0);
+        Log.i(TAG, "ad-free period ended");
     }
 
     public long adFreeRemainingMs() {
