@@ -126,5 +126,9 @@
     <string name="sc_calc_long">Standard calculator</string>
     <string name="add_to_home">Add to home screen</string>
     <string name="add_to_home_unsupported">Your launcher does not support home screen shortcuts</string>
+    <string name="open_in_browser">Open in browser</string>
+    <string name="retry">Try again</string>
+    <string name="privacy_offline_title">Can\'t load the privacy policy</string>
+    <string name="privacy_offline_body">Check your internet connection and try again.</string>
     <string name="first_launch_tip">Tip: tap ♥ on any calculator to add it to Favourites</string>
 </resources>
