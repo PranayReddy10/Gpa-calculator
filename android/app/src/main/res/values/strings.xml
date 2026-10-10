@@ -54,7 +54,7 @@
     <string name="settings_clear_history">Clear history</string>
     <string name="settings_analytics">Share anonymous usage statistics</string>
     <string name="settings_ads">Ads</string>
-    <string name="settings_remove_ads">Watch a video to remove ads for a while</string>
+    <string name="settings_remove_ads">Watch a short video for %1$d minutes without ads</string>
     <string name="settings_ad_free_until">Ad-free for %1$s more</string>
     <string name="settings_privacy_options">Privacy options</string>
     <string name="settings_about">About</string>

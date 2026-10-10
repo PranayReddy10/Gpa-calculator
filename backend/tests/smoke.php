@@ -43,6 +43,7 @@ check('config requires app key', $s === 401);
 [$s, $p] = call('GET', '/api/v1/config', [], $APP);
 check('config ok', $s === 200 && $p['ok'] && $p['data']['ads']['priority'] === ['admob', 'max', 'meta']);
 check('config hides MAX sdk key', !isset($p['data']['ads']['max']['sdk_key']));
+check('reward default is short', $p['data']['ads']['reward_ad_free_minutes'] === 10);
 check('config has native + interstitial placements', $p['data']['ads']['native_enabled'] === true && $p['data']['ads']['interstitial_on_open'] === true && $p['data']['ads']['interstitial_open_every_n'] === 3 && $p['data']['ads']['interstitial_on_exit'] === false);
 
 echo "device\n";
@@ -128,6 +129,10 @@ check('admin config saves', $s === 200 && $p['data']['ads']['priority'] === ['me
 [$s, $p] = call('GET', '/api/v1/config', [], $APP);
 check('app sees new config', $p['data']['ads']['admob']['banner'] === 'ca-app-pub-1/2' && $p['data']['app']['popup']['id'] === 'v2' && $p['data']['app']['popup']['frequency'] === 'daily' && $p['data']['app']['popup']['delay_sec'] === 3);
 $cfg['ads']['priority'] = ['admob'];
+$cfg['ads']['reward_ad_free_minutes'] = 120;
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+check('reward minutes capped at 60', $s === 422);
+$cfg['ads']['reward_ad_free_minutes'] = 5;
 $cfg['ads']['interstitial_open_every_n'] = 0;
 [$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
 check('admin config validates open frequency', $s === 422);

@@ -122,6 +122,13 @@ public class SettingsFragment extends Fragment {
         updateAdsCard();
         b.btnWatchAd.setOnClickListener(v -> {
             Haptics.tick(v);
+            if (BuildConfig.DEBUG && AdsManager.get(requireContext()).isAdFree()) {
+                // Debug builds only: switch ads back on immediately for testing.
+                AdsManager.get(requireContext()).endAdFree();
+                Snackbar.make(b.getRoot(), "Ads are back on (debug)", Snackbar.LENGTH_SHORT).show();
+                requireActivity().recreate(); // reloads the home banner
+                return;
+            }
             AdsManager.get(requireContext()).showRewarded(requireActivity(), (rewarded, message) -> {
                 if (b == null) return;
                 Snackbar.make(b.getRoot(), message, Snackbar.LENGTH_LONG).show();
@@ -156,14 +163,17 @@ public class SettingsFragment extends Fragment {
         AdsManager ads = AdsManager.get(requireContext());
         boolean show = ConfigStore.get(requireContext()).config().ads.enabled && ConfigStore.get(requireContext()).config().ads.rewarded_enabled;
         b.cardAds.setVisibility(show ? View.VISIBLE : View.GONE);
+        b.adsTitle.setText(getString(R.string.settings_remove_ads, ads.rewardMinutes()));
         long rem = ads.adFreeRemainingMs();
         if (rem > 0) {
             long min = rem / 60000;
             String txt = min >= 60 ? (min / 60) + " h " + (min % 60) + " min" : min + " min";
             b.adsSub.setText(getString(R.string.settings_ad_free_until, txt));
             b.adsSub.setVisibility(View.VISIBLE);
+            if (BuildConfig.DEBUG) b.btnWatchAd.setText("End (debug)");
         } else {
             b.adsSub.setVisibility(View.GONE);
+            b.btnWatchAd.setText(R.string.play);
         }
     }
 

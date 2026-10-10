@@ -39,7 +39,8 @@ public class RemoteConfig {
         public int interstitial_min_interval_sec = 60;
         public int app_open_min_interval_sec = 240;
         public int first_interstitial_delay_sec = 20;
-        public int reward_ad_free_minutes = 120;
+        /** Ad-free minutes after a rewarded video. Keep short: a calculator session is brief. */
+        public int reward_ad_free_minutes = 10;
         public boolean banner_on_home = true;
         public boolean banner_on_calculator = true;
         public boolean banner_on_result = false;
