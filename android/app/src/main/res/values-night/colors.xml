@@ -39,4 +39,10 @@
     <color name="header_gradient_end">#7A1240</color>
     <color name="chart_principal">#FFB4AB</color>
     <color name="chart_interest">#7A3B35</color>
+    <!-- Category accents (home cards, icons) -->
+    <color name="cat_percentage">#FF8A80</color>
+    <color name="cat_academic">#9FA8DA</color>
+    <color name="cat_finance">#81C784</color>
+    <color name="cat_everyday">#FFB74D</color>
+    <color name="cat_converters">#4DD0E1</color>
 </resources>

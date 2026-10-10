@@ -57,6 +57,16 @@
                     android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_saved_semesters"
+                style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_history" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

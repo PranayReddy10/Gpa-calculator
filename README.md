@@ -1,7 +1,7 @@
 # GPA Calculator 2.0 — Android app + admin backend
 
 Complete rebuild of the Play Store app `com.gpa.calculator` with a Material 3 UI, animations,
-53 calculators, three ad networks controlled from an admin panel, cloud-saved history and
+54 calculators, three ad networks controlled from an admin panel, cloud-saved history and
 self-hosted usage analytics.
 
 ```
@@ -11,13 +11,13 @@ backend/   PHP 7.4+/8.x + MySQL API and admin panel for shared hosting (cPanel f
 
 ## What the app includes
 
-**Calculators (53)**
+**Calculators (54)**
 
 | Category | Calculators |
 |---|---|
 | Tools | Standard keypad calculator (live result, brackets, %), Currency converter (USD/INR/EUR/GBP/AED and 30+ more, live ECB rates cached for offline, feed URL set in admin panel) |
 | Percentage | Marks %, Ratio to %, General % (3 modes), Change in %, Discount (stacked + tax), % Difference, Marks needed |
-| Academic | SGPA, SGPA with Grade (4 grade scales), CGPA, GPA → %, % → GPA, CGPA → % (CBSE/VTU/JNTU), % → CGPA, GPA scale converter, Final exam grade needed, Attendance (bunk/attend), Grade from marks |
+| Academic | SGPA, SGPA with Grade (4 grade scales), CGPA, CGPA target planner, GPA → %, % → GPA, CGPA → % (CBSE/VTU/JNTU), % → CGPA, GPA scale converter, Final exam grade needed, Attendance (bunk/attend), Grade from marks |
 | Finance | EMI with full amortisation schedule + chart, Simple interest, Compound interest, SIP, Lumpsum, FD, RD, Tax/GST (add/remove, CGST/SGST), Tip & split, Profit/Loss, Inflation, ROI/CAGR, Salary breakdown, Loan eligibility, Loan comparison (two offers incl. processing fee) |
 | Everyday | Age, Date difference, Days until, BMI, Calories (BMR/TDEE), Fuel cost, Electricity cost, Speed·Distance·Time, Average & statistics, Unit price (best value across up to 3 pack sizes, g/kg/oz/lb/ml/L/fl oz/pcs) |
 | Converters | Length, Weight, Area, Volume, Speed, Data size, Time, Temperature |
@@ -28,9 +28,18 @@ element from card to calculator, collapsing large header, spring result-card rev
 numbers, animated donut and bar charts, heart pop on favourite, swipe-to-delete with undo,
 validation shake, haptics, edge-to-edge.
 
+**Home**: time-of-day greeting, hero search card that hides on scroll and returns on scroll up,
+pinned category chips, "Continue where you left off" (reopens a calculator with your last
+inputs), favourites row, popular row, calculators grouped by category with colour accents.
+
+**History**: grouped by day (Today, Yesterday, Earlier this week, month), swipe to delete
+with undo, Clear all (with confirmation; also clears the cloud copy), export as CSV.
+
 **Features**: favourites, history with cloud backup/restore (MySQL), recent inputs per
-calculator, copy / share result as image, search + category chips, in-app review prompt,
-in-app update + forced update, rewarded "remove ads for N minutes".
+calculator, copy / share result as image, "Save to CGPA" from the SGPA screens (the CGPA
+screen loads your saved semesters), launcher shortcuts (long-press the icon: SGPA, CGPA,
+EMI, Calculator, plus recently used), "Add to home screen" for any calculator, in-app review
+prompt, in-app update + forced update, rewarded "remove ads for N minutes".
 
 **Push notifications (OneSignal)**: friendly "turn on notifications" pop-up before Android's
 permission dialog (after N opens, max 3 times, a week apart), Settings switch, taps deep-link

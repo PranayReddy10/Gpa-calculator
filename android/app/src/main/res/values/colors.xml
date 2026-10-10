@@ -47,4 +47,10 @@
     <color name="splash_background">#C8102E</color>
     <color name="success">#2E7D32</color>
     <color name="warning">#EF6C00</color>
+    <!-- Category accents (home cards, icons) -->
+    <color name="cat_percentage">#E53935</color>
+    <color name="cat_academic">#3F51B5</color>
+    <color name="cat_finance">#2E7D32</color>
+    <color name="cat_everyday">#EF6C00</color>
+    <color name="cat_converters">#00838F</color>
 </resources>

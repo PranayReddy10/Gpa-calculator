@@ -73,6 +73,20 @@
             android:paddingEnd="8dp">
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save_semester"
+                style="@style/Widget.Material3.Button.TextButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/semester_save"
+                android:visibility="gone"
+                app:icon="@drawable/ic_save" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_copy"
                 style="@style/Widget.Material3.Button.TextButton.Icon"
                 android:layout_width="wrap_content"
