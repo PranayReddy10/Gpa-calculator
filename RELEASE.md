@@ -44,11 +44,37 @@ Never commit the keystore or its passwords.
 - Ad-free minutes after rewarded video: 5–10.
 - Leave "Interstitial when leaving a calculator" off (Google treats exit interstitials as
   disruptive).
-- app-ads.txt: add the AppLovin / Meta lines from their dashboards if you use them.
+- app-ads.txt: add the lines from the AppLovin, Meta, Unity and Liftoff (Vungle) dashboards for the
+  networks you use (admin panel > Ads > app-ads.txt).
+- AdMob mediation (Meta, Unity Ads, Liftoff Monetize): the adapters are built into the app. Set up
+  each network in AdMob > Mediation (see "AdMob mediation" below); nothing changes in the app.
 
 **AdMob website**
 - AdMob > Privacy & messaging: publish a **GDPR** message (and **US state** message) so users in
   Europe/UK get the consent form; without it they receive only limited ads.
+
+### AdMob mediation (Meta, Unity Ads, Liftoff Monetize)
+
+The app already contains the AdMob adapters for Meta Audience Network, Unity Ads and Liftoff Monetize
+(Vungle). Mediation is set up only in the AdMob console, and the app needs no new build when it changes.
+
+1. Create the app on each network and note its IDs:
+   - **Meta**: Meta Business > Monetization Manager: app + placements (banner, interstitial,
+     rewarded, native). Meta serves through **bidding** only.
+   - **Unity Ads**: Unity Cloud > Monetization: project + Android game ID + ad units.
+   - **Liftoff Monetize**: Liftoff dashboard: app (app ID) + placements (reference IDs).
+2. AdMob > **Mediation** > Create mediation group, one per format (Banner, Interstitial, Rewarded,
+   Native, App open), Android. Add your AdMob ad units, then under **Bidding** add Meta Audience
+   Network, Unity Ads and Liftoff Monetize and paste each network's IDs.
+3. AdMob > **Privacy & messaging** > GDPR message > ad partners: make sure Meta, Unity and Liftoff
+   are in the list, or EEA/UK users won't get their ads.
+4. Add each network's app-ads.txt lines in the admin panel (Ads > app-ads.txt).
+5. Test: add your phone in AdMob > Settings > **Test devices**, open the app, long-press the
+   version in Settings > **Diagnostics**. The "AdMob mediation" line should read
+   `Meta ready, Unity ready, Liftoff ready`. **Ad inspector** shows each network and can test-load it.
+
+Tip: once Meta bidding is live in AdMob, switch the direct **Meta** network off in the admin panel,
+so Meta competes in AdMob's auction instead of taking a fixed slot in the app's own waterfall.
 
 ## 4. Build settings (`android/local.properties`)
 
@@ -122,7 +148,7 @@ triggers the Families policy, which the ad setup (AppLovin / Meta) is not certif
 form asks, describe them as fitness calculators.
 
 **Data safety.** These answers match what this app and its SDKs do. Re-check the SDK guides when
-filling the form: Google Mobile Ads, AppLovin, Meta Audience Network and OneSignal each publish a
+filling the form: Google Mobile Ads, AppLovin, Meta Audience Network, Unity Ads, Liftoff Monetize and OneSignal each publish a
 "Data safety" page.
 
 | Question | Answer |

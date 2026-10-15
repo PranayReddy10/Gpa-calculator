@@ -17,6 +17,8 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.AdapterStatus;
+import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.appopen.AppOpenAd;
 import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
@@ -29,6 +31,7 @@ import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.gpa.calculator.R;
 import com.gpa.calculator.data.remote.model.RemoteConfig;
+import java.util.Map;
 
 /** Google AdMob. Uses Google's public test unit IDs whenever test mode is on in the admin panel. */
 public final class AdmobProvider implements AdProvider {
@@ -59,12 +62,48 @@ public final class AdmobProvider implements AdProvider {
         }
         MobileAds.initialize(context.getApplicationContext(), status -> {
             initialized = true;
-            Log.i(TAG, "initialized");
+            mediationStatus = describeAdapters(status);
+            Log.i(TAG, "initialized; mediation: " + mediationStatus);
             onReady.run();
         });
     }
 
     @Override public boolean isInitialized() { return initialized; }
+
+    /** Mediation adapters reported by MobileAds.initialize, e.g. "Meta ready, Unity ready, Liftoff not ready (...)". */
+    public static volatile String mediationStatus = "not initialised yet";
+
+    /** Opens Google's Ad Inspector (registered AdMob test devices only); errors go to {@code onError}. */
+    public static void openAdInspector(Activity activity, java.util.function.Consumer<String> onError) {
+        MobileAds.openAdInspector(activity, error -> {
+            if (error != null) onError.accept(error.getMessage());
+        });
+    }
+
+    private static String describeAdapters(InitializationStatus status) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, AdapterStatus> e : status.getAdapterStatusMap().entrySet()) {
+            String label = adapterLabel(e.getKey());
+            if (label == null) continue;   // Google's own SDK entry
+            AdapterStatus st = e.getValue();
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(label).append(st.getInitializationState() == AdapterStatus.State.READY ? " ready" : " not ready");
+            if (st.getInitializationState() != AdapterStatus.State.READY && st.getDescription() != null
+                    && !st.getDescription().isEmpty()) {
+                sb.append(" (").append(st.getDescription()).append(')');
+            }
+        }
+        return sb.length() == 0 ? "no adapters" : sb.toString();
+    }
+
+    private static String adapterLabel(String className) {
+        String c = className.toLowerCase(java.util.Locale.ROOT);
+        if (c.contains("facebook") || c.contains(".meta")) return "Meta";
+        if (c.contains("unity")) return "Unity";
+        if (c.contains("vungle") || c.contains("liftoff")) return "Liftoff";
+        if (c.startsWith("com.google.android.gms")) return null;
+        return className.substring(className.lastIndexOf('.') + 1);
+    }
 
     /** Test mode: Google's test unit. Production: the admin-panel unit, or "" if none is set (no ad). */
     private String id(String real, String test) {
@@ -84,7 +123,7 @@ public final class AdmobProvider implements AdProvider {
         DisplayMetrics dm = activity.getResources().getDisplayMetrics();
         int widthPx = container.getWidth() > 0 ? container.getWidth() : dm.widthPixels;
         int widthDp = (int) (widthPx / dm.density);
-        view.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, widthDp));
+        view.setAdSize(AdSize.getLargeAnchoredAdaptiveBannerAdSize(activity, widthDp));
         view.setAdListener(new AdListener() {
             @Override public void onAdLoaded() { cb.onLoaded(view); }
             @Override public void onAdFailedToLoad(@NonNull LoadAdError e) {
