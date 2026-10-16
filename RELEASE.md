@@ -73,8 +73,9 @@ The app already contains the AdMob adapters for Meta Audience Network, Unity Ads
    version in Settings > **Diagnostics**. The "AdMob mediation" line should read
    `Meta ready, Unity ready, Liftoff ready`. **Ad inspector** shows each network and can test-load it.
 
-Tip: once Meta bidding is live in AdMob, switch the direct **Meta** network off in the admin panel,
-so Meta competes in AdMob's auction instead of taking a fixed slot in the app's own waterfall.
+This app uses **AdMob's auction** for all ads: in the admin panel keep **AdMob** on and the direct
+**AppLovin MAX** and **Meta** networks off (their defaults). Meta, Unity and Liftoff then compete for
+every AdMob ad request through bidding.
 
 ## 4. Build settings (`android/local.properties`)
 
