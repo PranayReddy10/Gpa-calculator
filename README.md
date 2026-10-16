@@ -97,7 +97,8 @@ about ads (unit IDs, on/off, order, frequency) is remote.
    `SETUP_KEY`, `ADMIN_USER`, `ADMIN_PASS`.
 4. Open `https://gpa.jntubooks.in/setup.php?key=<SETUP_KEY>` once (creates tables and
    the admin user), then **delete `setup.php`**.
-5. Admin panel: `https://gpa.jntubooks.in/admin/`. Check that
+5. Site root `https://gpa.jntubooks.in/` shows the app's landing page; the API status JSON is at
+   `https://gpa.jntubooks.in/api/v1`. Admin panel: `https://gpa.jntubooks.in/admin/`. Check that
    `https://gpa.jntubooks.in/config.php` shows **403 Forbidden** (secrets protected).
 6. In the Ads tab: enter unit IDs, set priority, turn **Test mode off** when going live.
 7. Public pages served by the backend: `/privacy` (edit it in the admin **Privacy** tab) and

@@ -37,7 +37,9 @@ final class App
         $m = $r->method;
         $p = $r->path;
         if ($m === 'OPTIONS') return new Response(204, ['ok' => true]);
-        if ($p === '/' || $p === '/api' || $p === '/api/v1') return Response::ok(['name' => 'GPA Calculator API', 'version' => 1, 'time' => time()]);
+        // Site root: public landing page. The API status JSON lives at /api and /api/v1.
+        if ($m === 'GET' && in_array($p, ['/', '/index.php', '/index.html'], true)) return Pages::landing();
+        if ($p === '/api' || $p === '/api/v1') return Response::ok(['name' => 'GPA Calculator API', 'version' => 1, 'time' => time()]);
 
         // ---- public pages (no app key): privacy policy for Google Play, app-ads.txt for AdMob
         if ($m === 'GET' && in_array($p, ['/privacy', '/privacy-policy', '/privacy.html'], true)) return Pages::privacy();

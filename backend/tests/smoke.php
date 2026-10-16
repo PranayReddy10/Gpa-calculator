@@ -268,6 +268,18 @@ $cfg['ads']['app_ads_txt'] = "applovin.com, abc123, DIRECT\n\n  facebook.com, 99
 [$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
 [$s, $txt] = raw('/app-ads.txt');
 check('app-ads.txt generated', $txt === "google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\napplovin.com, abc123, DIRECT\nfacebook.com, 999, RESELLER, c3e20eee3f780d68\n", $txt);
+[$s, $html, $ct] = raw('/');
+check('landing page at site root', $s === 200 && strpos($ct, 'text/html') === 0 && strpos($html, 'Every calculator a student needs.') !== false
+    && strpos($html, 'play.google.com/store/apps/details?id=com.gpa.calculator') !== false, $ct);
+$cfg['app']['publisher_name'] = '<script>alert(1)</script> Books';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+[$s, $html] = raw('/');
+check('landing page escapes publisher', $s === 200 && strpos($html, '<script>alert(1)') === false
+    && strpos($html, '&lt;script&gt;alert(1)&lt;/script&gt; Books') !== false);
+$cfg['app']['publisher_name'] = '';
+call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+[$s, $p] = call('GET', '/api/v1');
+check('API status JSON at /api/v1', $s === 200 && ($p['data']['name'] ?? '') === 'GPA Calculator API');
 [$s, $p] = call('GET', '/api/v1/nope');
 check('404', $s === 404);
 
