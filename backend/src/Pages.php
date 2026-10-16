@@ -56,7 +56,7 @@ GPA Calculator ("the app") is published by {$publisher}. This policy explains wh
 
 - There is no account or sign-up. The app never asks for your name, email address or phone number.
 - Calculations run on your phone. If cloud backup is on, saved calculations are stored on our server, linked only to a random app ID.
-- The app is free and shows ads from Google AdMob, AppLovin and Meta Audience Network, which may use your device's advertising ID.
+- The app is free and shows ads from Google AdMob and its partners (Meta Audience Network, Unity Ads, Liftoff Monetize), and from AppLovin, which may use your device's advertising ID.
 
 ## Information we collect
 
@@ -77,11 +77,13 @@ You can stop usage statistics at any time in **Settings > Share anonymous usage 
 
 ### Advertising
 
-Ads are provided by Google AdMob, AppLovin and Meta Audience Network. These partners may collect and use your device's advertising ID, IP address, device information and your interactions with ads to show, measure and personalise ads and to prevent fraud. See their policies:
+Ads are provided by Google AdMob and the ad networks it works with for this app (Meta Audience Network, Unity Ads and Liftoff Monetize, formerly Vungle), and by AppLovin. These partners may collect and use your device's advertising ID, IP address, device information and your interactions with ads to show, measure and personalise ads and to prevent fraud. See their policies:
 
 - Google: https://policies.google.com/technologies/partner-sites
 - AppLovin: https://www.applovin.com/privacy/
 - Meta: https://www.facebook.com/privacy/policy/
+- Unity Ads: https://unity.com/legal/game-player-and-app-user-privacy-policy
+- Liftoff Monetize (Vungle): https://liftoff.io/privacy-policy/
 
 Where the law requires consent (for example in the EEA and the UK), the app asks for it using Google's consent tool, and you can change your choice at any time in **Settings > Privacy options**. You can reset or delete your advertising ID in your phone's settings (**Settings > Privacy > Ads**).
 

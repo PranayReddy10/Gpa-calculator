@@ -209,7 +209,12 @@ public class SettingsFragment extends Fragment {
         androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Diagnostics")
                 .setMessage(diagnosticsText())
-                .setPositiveButton(R.string.ok, null)
+                // Google's Ad Inspector: shows each AdMob mediation network (Meta, Unity, Liftoff) and
+                // lets you test-load them. Opens only on devices added as test devices in AdMob.
+                .setPositiveButton("Ad inspector", (x, w) -> com.gpa.calculator.ads.AdmobProvider.openAdInspector(
+                        requireActivity(), err -> android.widget.Toast.makeText(requireContext(),
+                                "Ad inspector: " + err + "\nAdd this phone in AdMob > Settings > Test devices.",
+                                android.widget.Toast.LENGTH_LONG).show()))
                 .setNeutralButton("Test server", null)
                 .setNegativeButton(R.string.copy, (x, w) -> ShareUtil.copy(b.getRoot(), diagnosticsText()))
                 .show();

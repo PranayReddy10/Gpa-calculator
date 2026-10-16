@@ -37,7 +37,7 @@ final class AppConfig
                 'banner_on_home' => true,
                 'banner_on_calculator' => true,
                 'banner_on_result' => false,
-                // Extra lines for /app-ads.txt (AppLovin, Meta, ...). The AdMob line is generated.
+                // Extra lines for /app-ads.txt (AppLovin, Meta, Unity, Liftoff, ...). The AdMob line is generated.
                 'app_ads_txt' => '',
             ],
             'app' => [

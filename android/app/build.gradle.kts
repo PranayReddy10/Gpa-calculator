@@ -195,6 +195,11 @@ dependencies {
     implementation(libs.ump)
     implementation(libs.applovin.sdk)
     implementation(libs.audience.network)
+    // AdMob mediation: Meta, Unity Ads and Liftoff Monetize (Vungle) fill AdMob ad units through the
+    // mediation groups / bidding set up in the AdMob console. No app code needed beyond MobileAds.initialize.
+    implementation(libs.admob.mediation.meta)
+    implementation(libs.admob.mediation.unity)
+    implementation(libs.admob.mediation.liftoff)
 
     // Networking
     implementation(libs.okhttp)

@@ -158,6 +158,7 @@ public final class AdsManager implements ConfigStore.Listener {
             if (p != null) sb.append(", interstitial ").append(p.isInterstitialReady() ? "loaded" : "not loaded");
             sb.append('\n');
         }
+        sb.append("AdMob mediation: ").append(AdmobProvider.mediationStatus).append('\n');
         sb.append("Formats: banner ").append(a.banner_enabled).append(", native ").append(a.native_enabled)
                 .append(", interstitial ").append(a.interstitial_enabled).append(", app open ").append(a.app_open_enabled);
         return sb.toString();

@@ -52,7 +52,8 @@ share, update, ask for notifications). Rules: once / daily / every open, new or 
 users, date window, app version range, delay. One pop-up per session, never over an ad.
 
 **Ads** (all switched from the admin panel): Google AdMob, AppLovin MAX, Meta Audience
-Network. Formats: banner, native (an ad card in every calculator screen, compact on the keypad
+Network. AdMob ad units are also filled through AdMob mediation by Meta, Unity Ads and Liftoff
+Monetize (Vungle); the adapters are bundled and set up in the AdMob console. Formats: banner, native (an ad card in every calculator screen, compact on the keypad
 calculator), interstitial (after N calculations, when opening a calculator every N opens, and
 optionally when leaving one), app open and rewarded. Priority/waterfall order, per-network unit
 IDs, per-format and per-placement toggles, frequency caps and test mode are all remote. Google
