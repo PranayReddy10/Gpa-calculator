@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    android:stateListAnimator="@animator/card_press"
+    app:cardBackgroundColor="@color/shop_card"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/shop_line"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.gpa.calculator.ui.common.SquareImageView
+                android:id="@+id/image"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/shop_pink_soft"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                android:id="@+id/photos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_shop_photos_pill"
+                android:drawablePadding="4dp"
+                android:fontFamily="@font/jakarta_semibold"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="9dp"
+                android:paddingBottom="2dp"
+                android:textColor="#1C2844"
+                android:textSize="11sp"
+                app:drawableStartCompat="@drawable/ic_photo_camera"
+                app:drawableTint="#1C2844"
+                tools:text="6 photos" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/jakarta_semibold"
+                android:lines="2"
+                android:maxLines="2"
+                android:textColor="@color/shop_ink"
+                android:textSize="14sp"
+                tools:text="Personalized Tote Bag with Zip + Matching Pouch" />
+
+            <TextView
+                android:id="@+id/price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="@font/jakarta_bold"
+                android:textColor="@color/shop_pink"
+                android:textSize="16sp"
+                tools:text="₹236" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

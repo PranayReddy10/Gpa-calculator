@@ -14,6 +14,10 @@ public class ShopCatalog {
     public String subtitle = "";
     public String base_url = "";
     public boolean checkout_in_app = true;
+    /** Line under the price, e.g. "Inclusive of all taxes". */
+    public String price_note = "";
+    /** Up to 3 trust badges for the product page. */
+    public List<Highlight> highlights = new ArrayList<>();
     public long fetched_at;
     public boolean stale;
     public List<Category> categories = new ArrayList<>();
@@ -53,6 +57,8 @@ public class ShopCatalog {
         /** Short description; "short" is a Java keyword. */
         @SerializedName("short") public String shortText = "";
         public String description = "";
+        /** Description with simple formatting only (p, b, i, lists, headings); "" when unavailable. */
+        public String description_html = "";
         /** Option name -> values, e.g. "Pack" -> ["Pack-1", "Pack-2"]. */
         public Map<String, List<String>> attributes = new LinkedHashMap<>();
         public List<Variant> variants = new ArrayList<>();
@@ -81,6 +87,11 @@ public class ShopCatalog {
         public int max_files;
         public int max_length;
         public List<String> options = new ArrayList<>();
+    }
+
+    public static class Highlight {
+        public String title = "";
+        public String text = "";
     }
 
     public static class Rating {

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shop product page: typography and widgets in the MadeForU website style
+     (Fraunces for titles and prices, Plus Jakarta Sans for text). -->
+<resources>
+    <style name="Text.Shop.Title" parent="">
+        <item name="android:fontFamily">@font/fraunces_bold</item>
+        <item name="android:textSize">23sp</item>
+        <item name="android:textColor">@color/shop_ink</item>
+        <item name="android:lineSpacingMultiplier">1.08</item>
+    </style>
+
+    <style name="Text.Shop.SerifHeading" parent="Text.Shop.Title">
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="Text.Shop.Price" parent="">
+        <item name="android:fontFamily">@font/fraunces_bold</item>
+        <item name="android:textSize">30sp</item>
+        <item name="android:textColor">@color/shop_pink</item>
+    </style>
+
+    <style name="Text.Shop.Body" parent="">
+        <item name="android:fontFamily">@font/jakarta_regular</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/shop_ink</item>
+        <item name="android:lineSpacingMultiplier">1.32</item>
+    </style>
+
+    <style name="Text.Shop.Muted" parent="">
+        <item name="android:fontFamily">@font/jakarta_regular</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/shop_muted</item>
+    </style>
+
+    <style name="Text.Shop.Strong" parent="">
+        <item name="android:fontFamily">@font/jakarta_semibold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/shop_ink</item>
+    </style>
+
+    <style name="Text.Shop.Section" parent="">
+        <item name="android:fontFamily">@font/jakarta_bold</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textColor">@color/shop_ink</item>
+    </style>
+
+    <style name="Text.Shop.Eyebrow" parent="">
+        <item name="android:fontFamily">@font/jakarta_bold</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/shop_pink</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="Widget.Shop.Chip" parent="Widget.Material3.Chip.Assist">
+        <item name="chipBackgroundColor">@color/shop_card</item>
+        <item name="chipStrokeColor">@color/shop_line</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipIconTint">@color/shop_pink</item>
+        <item name="chipIconSize">18dp</item>
+        <item name="android:textColor">@color/shop_ink</item>
+        <item name="android:textAppearance">@style/Text.Shop.ChipText</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Shop.Pill</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+    </style>
+
+    <style name="Widget.Shop.Chip.Choice" parent="Widget.Material3.Chip.Filter">
+        <item name="chipBackgroundColor">@color/shop_chip_bg</item>
+        <item name="chipStrokeColor">@color/shop_chip_stroke</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="android:textColor">@color/shop_chip_text</item>
+        <item name="android:textAppearance">@style/Text.Shop.ChipText</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Shop.Pill</item>
+    </style>
+
+    <style name="Text.Shop.ChipText" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/jakarta_semibold</item>
+        <item name="android:fontFamily">@font/jakarta_semibold</item>
+        <item name="android:textSize">13.5sp</item>
+    </style>
+
+    <style name="ShapeAppearance.Shop.Pill" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="Widget.Shop.Button" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/shop_pink</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="iconTint">@android:color/white</item>
+        <item name="android:textAppearance">@style/Text.Shop.ButtonText</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Shop.Pill</item>
+    </style>
+
+    <style name="Widget.Shop.Button.Navy">
+        <item name="backgroundTint">@color/shop_navy</item>
+        <item name="android:textColor">@color/shop_on_navy</item>
+        <item name="iconTint">@color/shop_on_navy</item>
+    </style>
+
+    <style name="Text.Shop.ButtonText" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/jakarta_bold</item>
+        <item name="android:fontFamily">@font/jakarta_bold</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+</resources>

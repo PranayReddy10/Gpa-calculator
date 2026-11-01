@@ -48,6 +48,9 @@ import com.gpa.calculator.data.shop.ShopRepo;
 public class MainActivity extends BaseActivity {
     /** Extra naming a tab to open, e.g. "shop". */
     public static final String EXTRA_TAB = "open_tab";
+    /** With EXTRA_TAB "shop": top-level category slug to show. */
+    public static final String EXTRA_SHOP_CATEGORY = "shop_category";
+    @Nullable private String pendingShopCategory;
     private static final int UPDATE_REQUEST = 7001;
     private ActivityMainBinding b;
     private AdsManager.BannerHandle banner;
@@ -135,7 +138,7 @@ public class MainActivity extends BaseActivity {
         if (id == R.id.nav_favourites) { f = new FavouritesFragment(); tag = "fav"; }
         else if (id == R.id.nav_history) { f = new HistoryFragment(); tag = "history"; }
         else if (id == R.id.nav_settings) { f = new SettingsFragment(); tag = "settings"; }
-        else if (id == R.id.nav_shop) { f = new ShopFragment(); tag = "shop"; }
+        else if (id == R.id.nav_shop) { f = ShopFragment.newInstance(pendingShopCategory); pendingShopCategory = null; tag = "shop"; }
         else { f = new HomeFragment(); tag = "home"; }
         // Banner off on the Shop tab, back on when leaving it (callers set currentTab first).
         if (adsReady && (id == R.id.nav_shop) != bannerHiddenForShop) loadBanner();
@@ -169,9 +172,17 @@ public class MainActivity extends BaseActivity {
     }
 
     /** Opens the shop (from the Home banner or a link), even when its tab is hidden. */
-    public void openShopTab() {
+    public void openShopTab() { openShopTab(null); }
+
+    public void openShopTab(@Nullable String category) {
         RemoteConfig.Shop shop = ConfigStore.get(this).config().shop;
         if (!shop.enabled) return;
+        if (currentTab == R.id.nav_shop) {
+            Fragment f = getSupportFragmentManager().findFragmentByTag("shop");
+            if (f instanceof ShopFragment && category != null) ((ShopFragment) f).showCategory(category);
+            return;
+        }
+        pendingShopCategory = category;
         if (shop.show_tab) {
             b.bottomNav.setSelectedItemId(R.id.nav_shop);
         } else if (currentTab != R.id.nav_shop) {
@@ -204,9 +215,11 @@ public class MainActivity extends BaseActivity {
     private void handleDeepLink(@Nullable Intent intent) {
         if (intent == null) return;
         if ("shop".equals(intent.getStringExtra(EXTRA_TAB))) {
+            String category = intent.getStringExtra(EXTRA_SHOP_CATEGORY);
             intent.removeExtra(EXTRA_TAB);
+            intent.removeExtra(EXTRA_SHOP_CATEGORY);
             sessionPopupShown = true;
-            openShopTab();
+            openShopTab(category);
             return;
         }
         String calcId = intent.getStringExtra(PushManager.EXTRA_OPEN_CALC);

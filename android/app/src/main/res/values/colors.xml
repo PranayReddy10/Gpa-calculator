@@ -53,4 +53,14 @@
     <color name="cat_finance">#2E7D32</color>
     <color name="cat_everyday">#EF6C00</color>
     <color name="cat_converters">#00838F</color>
+    <!-- Shop product page: MadeForU website palette -->
+    <color name="shop_bg">#FDF6F8</color>
+    <color name="shop_card">#FFFFFF</color>
+    <color name="shop_ink">#1C2844</color>
+    <color name="shop_muted">#6E7591</color>
+    <color name="shop_pink">#F04577</color>
+    <color name="shop_pink_soft">#FDE6ED</color>
+    <color name="shop_line">#F2DCE3</color>
+    <color name="shop_navy">#1C2844</color>
+    <color name="shop_on_navy">#FFFFFF</color>
 </resources>

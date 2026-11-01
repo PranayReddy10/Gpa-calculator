@@ -13,12 +13,16 @@ import com.gpa.calculator.data.remote.ConfigStore;
 public final class ShopNav {
     private ShopNav() {}
 
-    public static void openShop(Context c, String source) {
+    public static void openShop(Context c, String source) { openShop(c, source, null); }
+
+    /** Opens the Shop tab, optionally on one top-level category (e.g. "More Gift Combo"). */
+    public static void openShop(Context c, String source, @androidx.annotation.Nullable String categorySlug) {
         Analytics.get(c).log("shop_open", "source", source);
         Intent i = new Intent(c, com.gpa.calculator.ui.MainActivity.class)
                 .setAction(Intent.ACTION_VIEW)
                 .putExtra(com.gpa.calculator.ui.MainActivity.EXTRA_TAB, "shop")
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        if (categorySlug != null) i.putExtra(com.gpa.calculator.ui.MainActivity.EXTRA_SHOP_CATEGORY, categorySlug);
         c.startActivity(i);
     }
 
