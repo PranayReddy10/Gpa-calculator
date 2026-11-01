@@ -19,7 +19,11 @@ import java.util.List;
 public final class ConfigStore {
     private static final String TAG = "GPAApi";
     private static final String KEY = "remote_config_json";
-    private static final long REFRESH_MS = 6L * 60 * 60 * 1000;
+    /**
+     * Re-read the admin settings when the app is opened and the copy on the phone is older than
+     * this, so switches in the admin panel (shop banner, ads, pop-ups) show up within minutes.
+     */
+    private static final long REFRESH_MS = 10L * 60 * 1000;
     private static ConfigStore instance;
 
     public interface Listener {
@@ -132,6 +136,7 @@ public final class ConfigStore {
         if (rc.app == null) rc.app = d.app;
         if (rc.app.popup == null) rc.app.popup = new RemoteConfig.Popup();
         if (rc.features == null) rc.features = d.features;
+        if (rc.shop == null) rc.shop = d.shop;
         return rc;
     }
 }

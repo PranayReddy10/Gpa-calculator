@@ -332,6 +332,12 @@ check('shop settings saved', $s === 200 && $p['data']['shop']['api_key'] === 'sh
 check('app config: shop on, key never sent', $p['data']['shop']['enabled'] === true && !array_key_exists('api_key', $p['data']['shop'])
     && strpos(json_encode($p), 'shop-secret-key-123') === false);
 check('shop needs app key', call('GET', '/api/v1/shop')[0] === 401);
+$cfg['shop']['show_home_banner'] = false;
+call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+[$s, $p] = call('GET', '/api/v1/config', [], $APP);
+check('Home banner switch reaches the app', $p['data']['shop']['show_home_banner'] === false && $p['data']['shop']['enabled'] === true);
+$cfg['shop']['show_home_banner'] = true;
+call('PUT', '/api/v1/admin/config', $cfg, $ADM);
 $tpl = call('GET', '/api/v1/admin/privacy/template', [], $ADM)[1]['data']['markdown'] ?? '';
 check('privacy template gains a Shop section', strpos($tpl, '### Shop') !== false && strpos($tpl, 'MadeForU (shop.test)') !== false);
 $shopCalls = 0;
