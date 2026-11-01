@@ -27,6 +27,8 @@ final class ShopController
     public static $fetcher = null;
 
     private const MAX_PAGES = 20;
+    /** Bump when the cached product format changes, so copies made by older code are refetched. */
+    private const CACHE_VERSION = 2;
 
     /** GET /api/v1/shop — app key. Catalogue for the shop screens. */
     public static function catalog(Request $r): Response
@@ -76,7 +78,7 @@ final class ShopController
     /** Cached catalogue, refetched when older than cache_minutes; on failure the last good copy is served. */
     public static function get(array $shop, bool $force): array
     {
-        $key = sha1($shop['base_url'] . "\n" . $shop['api_key']);
+        $key = sha1(self::CACHE_VERSION . "\n" . $shop['base_url'] . "\n" . $shop['api_key']);
         $cached = self::readCache();
         $fresh = $cached && $cached['key'] === $key && time() - $cached['fetched_at'] < $shop['cache_minutes'] * 60;
         if ($fresh && !$force) return self::present($shop, $cached);
