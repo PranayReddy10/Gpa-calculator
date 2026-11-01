@@ -56,7 +56,9 @@ users, date window, app version range, delay. One pop-up per session, never over
 in a Shop tab and a Home banner: search, categories, sorting, a product page with photos,
 options, "How to personalise" and related gifts, then **Personalise & buy** opens the shop's own
 product page inside the app for photo upload (Android photo picker) and checkout (UPI / payment
-apps open normally). Shop visits are logged as `shop_open`, `shop_product`, `shop_buy`.
+apps open normally). The product page follows the shop website's look (Fraunces + Plus Jakarta Sans,
+bundled under the SIL Open Font License, see `android/app/src/main/assets/licenses/`). Shop visits
+are logged as `shop_open`, `shop_product`, `shop_buy`.
 
 **Ads** (all switched from the admin panel): Google AdMob, AppLovin MAX, Meta Audience
 Network. AdMob ad units are also filled through AdMob mediation by Meta, Unity Ads and Liftoff

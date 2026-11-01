@@ -75,6 +75,10 @@ final class AppConfig
                 // Product pages open inside the app (photo upload + checkout) or in the phone's browser.
                 'checkout_in_app' => true,
                 'utm' => 'utm_source=gpa_calculator&utm_medium=app&utm_campaign=shop',
+                // Trust badges on the product page, one per line: "Title | small text".
+                'highlights' => "Secure payment | UPI, cards, COD\nDamage-free | Free remake if broken\nHandmade | In Hyderabad",
+                // Small line under the price.
+                'price_note' => 'Inclusive of all taxes',
                 'cache_minutes' => 30,
             ],
             'features' => [
@@ -175,6 +179,8 @@ final class AppConfig
         if ($shop['cache_minutes'] < 1 || $shop['cache_minutes'] > 1440) throw new HttpException(422, 'Shop cache must be between 1 and 1440 minutes');
         if ($shop['utm'] !== '' && !preg_match('/^[A-Za-z0-9_.~=&%+-]+$/', $shop['utm'])) throw new HttpException(422, 'Shop tracking tags must look like utm_source=gpa_calculator&utm_medium=app');
         if ($shop['enabled'] && $shop['name'] === '') throw new HttpException(422, 'Give the shop a name');
+        if (strlen($shop['highlights']) > 600 || count(array_filter(preg_split('/\r\n|\r|\n/', $shop['highlights']), 'trim')) > 3) throw new HttpException(422, 'Shop highlights: up to 3 lines like "Secure payment | UPI, cards, COD"');
+        if (strlen($shop['price_note']) > 120) throw new HttpException(422, 'Shop price note is too long');
         $os = $cfg['app']['onesignal_app_id'];
         if ($os !== '' && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $os)) throw new HttpException(422, 'OneSignal app ID must look like xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx');
         foreach (['interstitial_min_interval_sec', 'app_open_min_interval_sec', 'first_interstitial_delay_sec', 'reward_ad_free_minutes', 'rate_prompt_after_calcs'] as $k) {

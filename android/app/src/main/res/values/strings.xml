@@ -180,5 +180,21 @@
     <string name="shop_checkout_hint">Upload your photos and place the order here. Payment and delivery are handled by %1$s.</string>
     <string name="shop_no_app">No app found to open this link</string>
     <string name="shop_photo_pick_failed">Couldn\'t open your photos. Try again.</string>
+    <string name="shop_personalise_it">Personalise it</string>
+    <string name="shop_personalise_sub">You\'ll add these on the next page, before checkout.</string>
+    <string name="shop_add_photo">Add photo</string>
+    <string name="shop_add_your_photo">Add your photo</string>
+    <string name="shop_type_here">Type your text…</string>
+    <string name="shop_be_first">Be the first to review</string>
+    <string name="shop_reviews">%1$.1f · %2$d reviews</string>
+    <string name="shop_description">Description</string>
+    <string name="shop_more_in">More %1$s</string>
+    <string name="shop_photos_count">%1$d photos</string>
+    <string name="shop_share_label">Share</string>
+    <string name="shop_copy_link">Copy link</string>
+    <string name="shop_share_whatsapp">Share on WhatsApp</string>
+    <string name="shop_link_copied">Link copied</string>
+    <string name="shop_breadcrumb">Shop / %1$s</string>
+    <string name="shop_files_counter">0 / %1$d</string>
     <string name="shop_photo_counter">%1$d / %2$d</string>
 </resources>

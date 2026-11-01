@@ -1,88 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Product page in the MadeForU website style: soft pink page, rounded photo card with
+     thumbnails, serif title, price card, pill chips, "Personalise it" card, trust badges,
+     share row, collapsible description and a 2-column "You may also like". -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface">
+    android:background="@color/shop_bg">
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clipToPadding="false">
 
         <LinearLayout
+            android:id="@+id/page"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
 
-            <com.gpa.calculator.ui.common.SquareFrameLayout
+            <!-- Top bar: back · shop name · share -->
+            <LinearLayout
+                android:id="@+id/top_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/colorSurfaceContainerHighest">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
 
-                <androidx.viewpager2.widget.ViewPager2
-                    android:id="@+id/gallery"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                <ImageButton
+                    android:id="@+id/back"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_shop_circle"
+                    android:contentDescription="@string/back"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="@color/shop_ink" />
 
                 <TextView
-                    android:id="@+id/counter"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/shop_name"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_margin="12dp"
-                    android:background="@drawable/bg_photo_counter"
-                    android:paddingStart="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="3dp"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    tools:text="1 / 6" />
-            </com.gpa.calculator.ui.common.SquareFrameLayout>
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/fraunces_bold"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:textColor="@color/shop_pink"
+                    android:textSize="22sp"
+                    tools:text="madeforu" />
 
+                <ImageButton
+                    android:id="@+id/share"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_shop_circle"
+                    android:contentDescription="@string/share"
+                    android:padding="11dp"
+                    android:src="@drawable/ic_share"
+                    app:tint="@color/shop_ink" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/breadcrumb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/Text.Shop.Muted"
+                tools:text="Shop / Gift Combo / Personalized Heart-Shaped LED Fur Cushion" />
+
+            <!-- Photo card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/shop_card"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/shop_line"
+                app:strokeWidth="1dp">
+
+                <com.gpa.calculator.ui.common.SquareFrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <androidx.viewpager2.widget.ViewPager2
+                        android:id="@+id/gallery"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <TextView
+                        android:id="@+id/counter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="12dp"
+                        android:background="@drawable/bg_photo_counter"
+                        android:fontFamily="@font/jakarta_semibold"
+                        android:paddingStart="10dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="3dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        tools:text="1 / 6" />
+                </com.gpa.calculator.ui.common.SquareFrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/thumbs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
+
+            <!-- Title block -->
+            <TextView
+                android:id="@+id/category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:textAppearance="@style/Text.Shop.Eyebrow"
+                tools:text="Gift Combo" />
+
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textAppearance="@style/Text.Shop.Title"
+                tools:text="Personalized Heart-Shaped LED Fur Cushion – Custom Photo Printed Light-Up Pillow, White, 16 x 16 Inches" />
+
+            <TextView
+                android:id="@+id/rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:drawablePadding="4dp"
+                android:gravity="center_vertical"
+                android:textAppearance="@style/Text.Shop.Muted"
+                app:drawableStartCompat="@drawable/ic_star_border"
+                app:drawableTint="@color/shop_muted"
+                tools:text="Be the first to review" />
+
+            <!-- Price card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_shop_price"
                 android:orientation="vertical"
-                android:paddingStart="20dp"
-                android:paddingTop="18dp"
-                android:paddingEnd="20dp">
-
-                <TextView
-                    android:id="@+id/category"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-medium"
-                    android:letterSpacing="0.06"
-                    android:textAllCaps="true"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="12sp"
-                    tools:text="Square magnets" />
-
-                <TextView
-                    android:id="@+id/name"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textAppearance="@style/Text.GPA.Headline"
-                    tools:text="Personalized Photo Magnet – 2x2 Inch Square (Set of 2)" />
-
-                <TextView
-                    android:id="@+id/rating"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:visibility="gone"
-                    tools:text="4.8 ★ (120)"
-                    tools:visibility="visible" />
+                android:paddingStart="18dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="14dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -90,20 +175,18 @@
                         android:id="@+id/price"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-medium"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="26sp"
-                        tools:text="₹103" />
+                        android:textAppearance="@style/Text.Shop.Price"
+                        tools:text="₹599" />
 
                     <TextView
                         android:id="@+id/regular"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="15sp"
+                        android:textAppearance="@style/Text.Shop.Muted"
+                        android:textSize="16sp"
                         android:visibility="gone"
-                        tools:text="₹149"
+                        tools:text="₹799"
                         tools:visibility="visible" />
 
                     <TextView
@@ -111,137 +194,282 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
-                        android:background="@drawable/bg_discount_badge"
-                        android:fontFamily="sans-serif-medium"
-                        android:paddingStart="8dp"
+                        android:background="@drawable/bg_shop_button_pink"
+                        android:fontFamily="@font/jakarta_bold"
+                        android:paddingStart="9dp"
                         android:paddingTop="2dp"
-                        android:paddingEnd="8dp"
+                        android:paddingEnd="9dp"
                         android:paddingBottom="2dp"
-                        android:textColor="?attr/colorOnPrimary"
+                        android:textColor="@android:color/white"
                         android:textSize="12sp"
                         android:visibility="gone"
-                        tools:text="30% OFF"
+                        tools:text="25% OFF"
                         tools:visibility="visible" />
                 </LinearLayout>
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/facts"
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/price_note"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    app:chipSpacingHorizontal="8dp" />
+                    android:layout_marginTop="2dp"
+                    android:textAppearance="@style/Text.Shop.Muted"
+                    tools:text="Inclusive of all taxes" />
+            </LinearLayout>
 
-                <!-- Options from the shop (pack size, shape, …) -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/facts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="4dp" />
+
+            <TextView
+                android:id="@+id/short_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/Text.Shop.Body"
+                tools:text="Make your special memories shine with this Personalized Heart-Shaped LED Fur Cushion." />
+
+            <!-- Options (pack size, shape, …) -->
+            <LinearLayout
+                android:id="@+id/options_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/shop_options"
+                    android:textAppearance="@style/Text.Shop.Section" />
+
                 <LinearLayout
-                    android:id="@+id/options_section"
+                    android:id="@+id/options"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:orientation="vertical"
-                    android:visibility="gone"
-                    tools:visibility="visible">
+                    android:orientation="vertical" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/shop_options"
-                        android:textAppearance="@style/Text.GPA.Title" />
-
-                    <LinearLayout
-                        android:id="@+id/options"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical" />
-
-                    <TextView
-                        android:id="@+id/options_note"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/shop_options_note"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <!-- What the customer adds: photos, choices, text -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/personal_card"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:visibility="gone"
-                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="0dp"
-                    tools:visibility="visible">
+                    android:layout_marginTop="8dp"
+                    android:text="@string/shop_options_note"
+                    android:textAppearance="@style/Text.Shop.Muted"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Personalise it -->
+            <LinearLayout
+                android:id="@+id/personal_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_shop_icon_square"
+                        android:contentDescription="@null"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_auto_awesome"
+                        app:tint="@android:color/white" />
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/shop_how_title"
-                            android:textAppearance="@style/Text.GPA.Title" />
+                            android:text="@string/shop_personalise_it"
+                            android:textAppearance="@style/Text.Shop.Section" />
 
-                        <LinearLayout
-                            android:id="@+id/personal_rows"
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical" />
+                            android:layout_marginTop="2dp"
+                            android:text="@string/shop_personalise_sub"
+                            android:textAppearance="@style/Text.Shop.Muted"
+                            android:textSize="12.5sp" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/personal_rows"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buy_inline"
+                style="@style/Widget.Shop.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/shop_buy"
+                app:icon="@drawable/ic_add_photo"
+                app:iconGravity="textStart" />
+
+            <!-- Trust badges -->
+            <LinearLayout
+                android:id="@+id/highlights"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal" />
+
+            <!-- Share -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/about_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="@string/shop_about"
-                    android:textAppearance="@style/Text.GPA.Title" />
+                    android:layout_marginEnd="10dp"
+                    android:text="@string/shop_share_label"
+                    android:textAppearance="@style/Text.Shop.Strong" />
+
+                <ImageButton
+                    android:id="@+id/share_whatsapp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_shop_circle"
+                    android:contentDescription="@string/shop_share_whatsapp"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_whatsapp" />
+
+                <ImageButton
+                    android:id="@+id/share_more"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_shop_circle"
+                    android:contentDescription="@string/share"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_share"
+                    app:tint="@color/shop_ink" />
+
+                <ImageButton
+                    android:id="@+id/share_link"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_shop_circle"
+                    android:contentDescription="@string/shop_copy_link"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_link"
+                    app:tint="@color/shop_ink" />
+            </LinearLayout>
+
+            <!-- Description -->
+            <LinearLayout
+                android:id="@+id/description_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="16dp">
+
+                <LinearLayout
+                    android:id="@+id/description_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/shop_description"
+                        android:textAppearance="@style/Text.Shop.Section" />
+
+                    <ImageView
+                        android:id="@+id/description_toggle"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:contentDescription="@string/shop_read_less"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_remove"
+                        app:tint="@color/shop_muted" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/description"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:ellipsize="end"
-                    android:lineSpacingMultiplier="1.15"
-                    android:maxLines="6"
-                    android:textAppearance="@style/Text.GPA.Body"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    tools:text="Decorate your space with memories that matter…" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/read_more"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="-12dp"
-                    android:text="@string/shop_read_more" />
+                    android:layout_marginTop="4dp"
+                    android:paddingEnd="8dp"
+                    android:textAppearance="@style/Text.Shop.Body"
+                    tools:text="Make your precious memories shine with our Personalized Heart-Shaped LED Fur Cushion!" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/related_title"
-                android:layout_width="wrap_content"
+            <!-- You may also like -->
+            <LinearLayout
+                android:id="@+id/related_header"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="12dp"
-                android:text="@string/shop_related"
-                android:textAppearance="@style/Text.GPA.Title" />
+                android:layout_marginTop="26dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/shop_related"
+                    android:textAppearance="@style/Text.Shop.SerifHeading" />
+
+                <TextView
+                    android:id="@+id/related_more"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:fontFamily="@font/jakarta_bold"
+                    android:padding="6dp"
+                    android:textColor="@color/shop_pink"
+                    android:textSize="14sp"
+                    tools:text="More Gift Combo" />
+            </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/related"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:clipToPadding="false"
+                android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false"
-                android:paddingStart="14dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="14dp" />
+                android:overScrollMode="never" />
 
             <!-- room for the bottom bar -->
             <Space
@@ -251,48 +479,14 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Back / share over the photo -->
-    <LinearLayout
-        android:id="@+id/top_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp">
-
-        <ImageButton
-            android:id="@+id/back"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="@drawable/bg_round_scrim"
-            android:contentDescription="@string/back"
-            android:padding="10dp"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="@android:color/white" />
-
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
-
-        <ImageButton
-            android:id="@+id/share"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="@drawable/bg_round_scrim"
-            android:contentDescription="@string/share"
-            android:padding="11dp"
-            android:src="@drawable/ic_share"
-            app:tint="@android:color/white" />
-    </LinearLayout>
-
     <!-- Sticky buy bar -->
     <LinearLayout
         android:id="@+id/buy_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="?attr/colorSurfaceContainerLow"
-        android:elevation="8dp"
+        android:background="@color/shop_card"
+        android:elevation="10dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="20dp"
@@ -310,24 +504,25 @@
                 android:id="@+id/bar_price"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="18sp"
-                tools:text="₹103" />
+                android:fontFamily="@font/fraunces_bold"
+                android:textColor="@color/shop_ink"
+                android:textSize="20sp"
+                tools:text="₹599" />
 
             <TextView
                 android:id="@+id/bar_hint"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="@style/Text.Shop.Muted"
                 android:textSize="12sp"
-                tools:text="Ready in 3 days" />
+                tools:text="Ready in 2 days" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buy"
+            style="@style/Widget.Shop.Button"
             android:layout_width="wrap_content"
-            android:layout_height="56dp"
+            android:layout_height="wrap_content"
             android:text="@string/shop_buy"
             app:icon="@drawable/ic_add_photo" />
     </LinearLayout>

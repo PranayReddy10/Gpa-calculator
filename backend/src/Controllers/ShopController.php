@@ -101,6 +101,8 @@ final class ShopController
             'subtitle' => $shop['subtitle'],
             'base_url' => rtrim($shop['base_url'], '/'),
             'checkout_in_app' => (bool)$shop['checkout_in_app'],
+            'price_note' => $shop['price_note'],
+            'highlights' => self::highlights($shop['highlights']),
             'fetched_at' => $entry['fetched_at'],
             'stale' => $stale,
             'categories' => $entry['categories'],
@@ -230,6 +232,7 @@ final class ShopController
             'category' => self::text((string)($p['category'] ?? ''), 60),
             'category_slugs' => array_values(array_filter(array_map(static fn($c) => is_array($c) ? (string)($c['slug'] ?? '') : '', (array)($p['categories'] ?? [])))),
             'short' => self::text(strip_tags(html_entity_decode((string)($p['short_description'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8')), 300),
+            'description_html' => self::safeHtml((string)($p['description_html'] ?? ''), 12000),
             'description' => self::paragraphs((string)($p['description_text'] ?? strip_tags((string)($p['description_html'] ?? ''))), 4000),
             'attributes' => (object)$attrs,
             'variants' => $variants,
@@ -297,6 +300,39 @@ final class ShopController
         if (@file_put_contents($tmp, json_encode($entry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) !== false) {
             @rename($tmp, self::$cacheFile);
         }
+    }
+
+    /** "Title | small text" lines -> [{title, text}], at most 3. */
+    private static function highlights(string $raw): array
+    {
+        $out = [];
+        foreach (preg_split('/\r\n|\r|\n/', $raw) as $line) {
+            $parts = array_map('trim', explode('|', $line, 2));
+            if ($parts[0] === '') continue;
+            $out[] = ['title' => self::text($parts[0], 40), 'text' => self::text($parts[1] ?? '', 60)];
+            if (count($out) === 3) break;
+        }
+        return $out;
+    }
+
+    /**
+     * The shop's description HTML reduced to plain formatting the app can show safely:
+     * paragraphs, line breaks, bold/italic, headings and lists. Every attribute is removed,
+     * so no links, images, styles or scripts reach the app.
+     */
+    public static function safeHtml(string $html, int $max): string
+    {
+        if (trim($html) === '') return '';
+        $html = preg_replace('#<(script|style|iframe|object|svg|noscript)\b[^>]*>.*?</\1\s*>#is', '', $html) ?? '';
+        $html = strip_tags($html, '<p><br><strong><b><em><i><u><ul><ol><li><h1><h2><h3><h4><h5><h6>');
+        $html = preg_replace('#<(/?)(p|br|strong|b|em|i|u|ul|ol|li|h[1-6])\b[^>]*>#i', '<$1$2>', $html) ?? '';
+        $html = preg_replace('#<(p|li|h[1-6])>\s*(&nbsp;|\s)*</\1>#i', '', $html) ?? '';
+        $html = trim(preg_replace('/\s+/u', ' ', $html) ?? '');
+        if (strlen($html) > $max) {
+            // Too long for the app: fall back to the plain-text description.
+            return '';
+        }
+        return $html;
     }
 
     private static function withUtm(string $url, string $utm): string

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One personalisation field, drawn like the website's form (the real upload happens on the next page). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="@style/Text.Shop.Strong"
+            tools:text="Upload your photo *" />
+
+        <TextView
+            android:id="@+id/counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/jakarta_semibold"
+            android:textColor="@color/shop_muted"
+            android:textSize="13sp"
+            android:visibility="gone"
+            tools:text="0 / 1"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/help"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textAppearance="@style/Text.Shop.Muted"
+        tools:text="Clear, well-lit photos print best." />
+
+    <!-- photos: dashed "Add photo" tile -->
+    <LinearLayout
+        android:id="@+id/add_photo"
+        android:layout_width="104dp"
+        android:layout_height="104dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_shop_dashed_tile"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/jakarta_regular"
+            android:text="+"
+            android:textColor="@color/shop_pink"
+            android:textSize="26sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/jakarta_semibold"
+            android:text="@string/shop_add_photo"
+            android:textColor="@color/shop_pink"
+            android:textSize="12.5sp" />
+    </LinearLayout>
+
+    <!-- choices: option pills -->
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/choices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone" />
+
+    <!-- text: input look-alike -->
+    <TextView
+        android:id="@+id/text_box"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_shop_input"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:text="@string/shop_type_here"
+        android:textAppearance="@style/Text.Shop.Muted"
+        android:textSize="14sp"
+        android:visibility="gone" />
+</LinearLayout>

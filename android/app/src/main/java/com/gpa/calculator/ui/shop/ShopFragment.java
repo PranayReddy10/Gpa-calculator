@@ -30,6 +30,19 @@ import java.util.List;
 
 /** Shop tab: the shop's products with search, categories and sorting. */
 public class ShopFragment extends Fragment {
+    private static final String ARG_CATEGORY = "category";
+
+    /** @param category top-level category slug to open on, or null for all products */
+    public static ShopFragment newInstance(@Nullable String category) {
+        ShopFragment f = new ShopFragment();
+        if (category != null) {
+            Bundle a = new Bundle();
+            a.putString(ARG_CATEGORY, category);
+            f.setArguments(a);
+        }
+        return f;
+    }
+
     private FragmentShopBinding b;
     private ShopAdapter adapter;
     @Nullable private ShopCatalog catalog;
@@ -47,6 +60,7 @@ public class ShopFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        if (savedInstanceState == null && getArguments() != null) category = getArguments().getString(ARG_CATEGORY);
         if (savedInstanceState != null) {
             category = savedInstanceState.getString("category");
             query = savedInstanceState.getString("query", "");
@@ -170,6 +184,17 @@ public class ShopFragment extends Fragment {
             b.grid.scrollToPosition(0);
             render();
         });
+    }
+
+    /** Switches to a category (e.g. from "More Gift Combo" on a product page). */
+    public void showCategory(String slug) {
+        category = slug;
+        builtChipsFor = ""; // rebuild so the chip selection follows
+        if (b != null) {
+            b.appBar.setExpanded(true, true);
+            b.grid.scrollToPosition(0);
+            render();
+        }
     }
 
     private Chip chip(String text, @Nullable String slug) {

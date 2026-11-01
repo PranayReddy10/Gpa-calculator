@@ -155,7 +155,7 @@
       <h3>app-ads.txt</h3>
       <small>Published at <a id="appAdsLink" target="_blank" rel="noopener"></a>. The Google line is generated from the AdMob app ID above. Add the lines from AppLovin, Meta, Unity and Liftoff (Vungle) dashboards here, one per line.</small>
       <textarea id="ads.app_ads_txt" placeholder="applovin.com, xxxxxxxx, DIRECT&#10;facebook.com, 1234567890, RESELLER, c3e20eee3f780d68"></textarea>
-      <p><button class="primary" id="saveAds">Save ad settings</button> <small>Apps pick up changes on next launch (config is cached up to 6 hours).</small></p>
+      <p><button class="primary" id="saveAds">Save ad settings</button> <small>Apps pick up changes the next time they are opened (they re-check every 10 minutes).</small></p>
     </div>
   </div>
 
@@ -267,6 +267,10 @@
         <div><div class="chk"><input type="checkbox" id="shop.show_tab"><label for="shop.show_tab" style="margin:0">Shop tab in the bottom bar</label></div></div>
         <div><div class="chk"><input type="checkbox" id="shop.show_home_banner"><label for="shop.show_home_banner" style="margin:0">Banner on the Home screen</label></div></div>
         <div><div class="chk"><input type="checkbox" id="shop.checkout_in_app"><label for="shop.checkout_in_app" style="margin:0">Open product pages inside the app (off = phone's browser)</label></div></div>
+      </div>
+      <div class="row">
+        <div><label>Trust badges on the product page (up to 3 lines: <code>Title | small text</code>)</label><textarea id="shop.highlights" style="min-height:84px"></textarea></div>
+        <div><label>Line under the price</label><input type="text" id="shop.price_note" placeholder="Inclusive of all taxes"></div>
       </div>
       <div class="row">
         <div><label>Tracking tags added to product links</label><input type="text" id="shop.utm"></div>
@@ -438,7 +442,7 @@
     return out;
   }
   async function loadConfig(){ try { config = await api('GET', '/admin/config'); fillForm(); showPrivacyMeta(); } catch(e){ alert(e.message); } }
-  $('saveAds').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('ads')); fillForm(); msg('adsMsg', 'Saved. Apps will use the new settings on next launch.', true); } catch(e){ msg('adsMsg', e.message, false); } };
+  $('saveAds').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('ads')); fillForm(); msg('adsMsg', 'Saved. Apps use the new settings the next time they are opened (within about 10 minutes).', true); } catch(e){ msg('adsMsg', e.message, false); } };
   $('saveApp').onclick = async () => { try { config = await api('PUT', '/admin/config', readForm('appcfg')); fillForm(); msg('appMsg', 'Saved.', true); } catch(e){ msg('appMsg', e.message, false); } };
 
   // ---- privacy policy
@@ -460,7 +464,7 @@
 
   // ---- shop
   $('saveShop').onclick = async () => {
-    try { config = await api('PUT', '/admin/config', readForm('shop')); fillForm(); msg('shopMsg', 'Saved. Apps show the change on next launch.', true); }
+    try { config = await api('PUT', '/admin/config', readForm('shop')); fillForm(); msg('shopMsg', 'Saved. Apps show the change the next time they are opened (within about 10 minutes).', true); }
     catch(e){ msg('shopMsg', e.message, false); }
   };
   $('testShop').onclick = async () => {

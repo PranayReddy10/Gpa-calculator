@@ -332,6 +332,12 @@ check('shop settings saved', $s === 200 && $p['data']['shop']['api_key'] === 'sh
 check('app config: shop on, key never sent', $p['data']['shop']['enabled'] === true && !array_key_exists('api_key', $p['data']['shop'])
     && strpos(json_encode($p), 'shop-secret-key-123') === false);
 check('shop needs app key', call('GET', '/api/v1/shop')[0] === 401);
+$cfg['shop']['show_home_banner'] = false;
+call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+[$s, $p] = call('GET', '/api/v1/config', [], $APP);
+check('Home banner switch reaches the app', $p['data']['shop']['show_home_banner'] === false && $p['data']['shop']['enabled'] === true);
+$cfg['shop']['show_home_banner'] = true;
+call('PUT', '/api/v1/admin/config', $cfg, $ADM);
 $tpl = call('GET', '/api/v1/admin/privacy/template', [], $ADM)[1]['data']['markdown'] ?? '';
 check('privacy template gains a Shop section', strpos($tpl, '### Shop') !== false && strpos($tpl, 'MadeForU (shop.test)') !== false);
 $shopCalls = 0;
@@ -344,6 +350,10 @@ $p1 = $d['products'][0] ?? [];
 check('shop product trimmed', !isset($p1['seo']) && $p1['short'] === 'Set of 2 × magnets' && $p1['description'] === "Line one.\n\nLine two.", $p1);
 check('shop product links tagged', ($p1['url'] ?? '') === 'https://shop.test/product/p1/?utm_source=gpa_calculator&utm_medium=app&utm_campaign=shop');
 check('shop images: only http(s)', ($p1['images'] ?? []) === ['https://shop.test/a.png', 'https://shop.test/b.png'], $p1['images'] ?? null);
+check('shop product carries badges + price note', ($d['highlights'][0]['title'] ?? '') === 'Secure payment' && $d['price_note'] === 'Inclusive of all taxes', $d['highlights'] ?? null);
+$h = ShopController::safeHtml('<h3 class="x" onclick="evil()">Key <b>Features</b></h3><script>alert(1)</script><p style="color:red">Hi <a href="https://x.test">link</a><img src=x onerror=alert(1)></p><ul><li data-a="1">One</li><li> </li></ul><iframe src="https://x"></iframe>', 12000);
+check('description HTML: formatting kept, everything else removed', $h === '<h3>Key <b>Features</b></h3><p>Hi link</p><ul><li>One</li></ul>', $h);
+check('description HTML too long falls back', ShopController::safeHtml(str_repeat('<p>abc</p>', 3000), 12000) === '');
 check('shop product in parent category too', ($p1['category_slugs'] ?? []) === ['square-magnets', 'magnets'], $p1['category_slugs'] ?? null);
 $catSlugs = array_column($d['categories'] ?? [], 'count', 'slug');
 check('shop categories: parent rolled up, empty hidden', $catSlugs === ['magnets' => 3, 'square-magnets' => 3], $catSlugs);
