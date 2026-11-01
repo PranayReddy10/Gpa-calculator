@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Icons are looked up by name at runtime (Icons.resolve / getIdentifier); never shrink them away. -->
+<!-- Icons are looked up by name at runtime (Icons.resolve / getIdentifier), and the shop fonts are loaded by
+     name in the product description (file:///android_res/font/...); never shrink them away. -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@drawable/ic_*,@drawable/sc_glyph_*" />
+    tools:keep="@drawable/ic_*,@drawable/sc_glyph_*,@font/*" />

@@ -340,9 +340,13 @@ $cfg['shop']['show_home_banner'] = true;
 call('PUT', '/api/v1/admin/config', $cfg, $ADM);
 $tpl = call('GET', '/api/v1/admin/privacy/template', [], $ADM)[1]['data']['markdown'] ?? '';
 check('privacy template gains a Shop section', strpos($tpl, '### Shop') !== false && strpos($tpl, 'MadeForU (shop.test)') !== false);
+// A cache file written by older code (old key format, no description_html) must not be served.
+file_put_contents(ShopController::$cacheFile, json_encode(['key' => sha1("https://shop.test\nshop-secret-key-123"),
+    'fetched_at' => time(), 'products' => [['id' => 99, 'name' => 'Old copy']], 'categories' => []]));
 $shopCalls = 0;
 [$s, $p] = call('GET', '/api/v1/shop', [], $APP);
 $d = $p['data'] ?? [];
+check('old-format shop cache is refetched', $shopCalls > 0 && ($d['products'][0]['name'] ?? '') !== 'Old copy');
 check('shop catalogue: all pages', $s === 200 && count($d['products'] ?? []) === 3 && $shopCalls === 3, [$s, $shopCalls, $p['error'] ?? null]);
 check('shop key sent to the shop API', $shopKeySeen === 'shop-secret-key-123');
 check('shop catalogue never contains the key', strpos(json_encode($p), 'shop-secret-key-123') === false);

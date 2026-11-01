@@ -3,15 +3,9 @@ package com.gpa.calculator.ui.shop;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.Typeface;
-import android.os.Build;
 import android.os.Bundle;
-import android.text.Html;
-import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.style.BulletSpan;
-import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +16,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -44,7 +37,6 @@ import com.gpa.calculator.databinding.ItemShopThumbBinding;
 import com.gpa.calculator.databinding.ViewShopHighlightBinding;
 import com.gpa.calculator.databinding.ViewShopPersonalClassicBinding;
 import com.gpa.calculator.ui.BaseActivity;
-import com.gpa.calculator.ui.common.FontSpan;
 import com.gpa.calculator.ui.common.ImageLoader;
 import com.gpa.calculator.ui.common.ShareUtil;
 
@@ -408,40 +400,77 @@ public class ShopProductActivity extends BaseActivity {
 
     // ------------------------------------------------------------------ description
     private void bindDescription() {
-        CharSequence text = !product.description_html.isEmpty() ? styledHtml(product.description_html)
-                : !product.description.isEmpty() ? product.description : product.shortText;
-        b.descriptionCard.setVisibility(text.length() == 0 ? View.GONE : View.VISIBLE);
-        b.description.setText(text);
+        boolean html = !product.description_html.isEmpty();
+        CharSequence plain = !product.description.isEmpty() ? product.description : product.shortText;
+        b.descriptionCard.setVisibility(!html && plain.length() == 0 ? View.GONE : View.VISIBLE);
+        if (html) {
+            showHtmlDescription(product.description_html);
+        } else {
+            b.description.setText(plain);
+        }
         b.descriptionHeader.setOnClickListener(v -> {
             descriptionOpen = !descriptionOpen;
-            b.description.setVisibility(descriptionOpen ? View.VISIBLE : View.GONE);
+            View body = html ? b.descriptionWeb : b.description;
+            body.setVisibility(descriptionOpen ? View.VISIBLE : View.GONE);
             b.descriptionToggle.setImageResource(descriptionOpen ? R.drawable.ic_remove : R.drawable.ic_add);
             b.descriptionToggle.setContentDescription(getString(descriptionOpen ? R.string.shop_read_less : R.string.shop_read_more));
         });
     }
 
-    /** The shop's description HTML with its headings in the serif title font and pink list bullets. */
-    private CharSequence styledHtml(String html) {
-        Spanned src = Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT);
-        SpannableStringBuilder sb = new SpannableStringBuilder(src);
-        Typeface serif = ResourcesCompat.getFont(this, R.font.fraunces_bold);
-        int pink = ContextCompat.getColor(this, R.color.shop_pink);
-        int ink = ContextCompat.getColor(this, R.color.shop_ink);
-        for (RelativeSizeSpan rs : sb.getSpans(0, sb.length(), RelativeSizeSpan.class)) {
-            int s = sb.getSpanStart(rs), e = sb.getSpanEnd(rs);
-            if (serif != null) sb.setSpan(new FontSpan(serif), s, e, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            sb.setSpan(new android.text.style.ForegroundColorSpan(ink), s, e, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            sb.setSpan(new RelativeSizeSpan(Math.min(rs.getSizeChange(), 1.3f)), s, e, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            sb.removeSpan(rs);
-        }
-        for (BulletSpan bs : sb.getSpans(0, sb.length(), BulletSpan.class)) {
-            int s = sb.getSpanStart(bs), e = sb.getSpanEnd(bs), f = sb.getSpanFlags(bs);
-            sb.removeSpan(bs);
-            BulletSpan pinkBullet = Build.VERSION.SDK_INT >= 28 ? new BulletSpan(dp(10), pink, dp(3)) : new BulletSpan(dp(10), pink);
-            sb.setSpan(pinkBullet, s, e, f);
-        }
-        while (sb.length() > 0 && Character.isWhitespace(sb.charAt(sb.length() - 1))) sb.delete(sb.length() - 1, sb.length());
-        return sb;
+    /**
+     * Renders the shop's description HTML (already reduced by our server to headings, paragraphs,
+     * bold/italic and lists) with the website's fonts and colours. JavaScript stays off; the page
+     * cannot load anything from the network.
+     */
+    private void showHtmlDescription(String bodyHtml) {
+        b.description.setVisibility(View.GONE);
+        android.webkit.WebView w = b.descriptionWeb;
+        w.setVisibility(View.VISIBLE);
+        w.setBackgroundColor(0);
+        w.setVerticalScrollBarEnabled(false);
+        w.setHorizontalScrollBarEnabled(false);
+        w.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        android.webkit.WebSettings ws = w.getSettings();
+        ws.setJavaScriptEnabled(false);
+        ws.setAllowFileAccess(false);           // file:///android_res/ (our fonts) is always readable
+        ws.setAllowContentAccess(false);
+        ws.setBlockNetworkLoads(true);
+        ws.setTextZoom(Math.round(getResources().getConfiguration().fontScale * 100));
+        w.setWebViewClient(new android.webkit.WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(android.webkit.WebView view, android.webkit.WebResourceRequest r) {
+                ShopNav.openExternal(ShopProductActivity.this, r.getUrl());
+                return true;
+            }
+        });
+        String page = "<!doctype html><html><head><meta charset=\"utf-8\">"
+                + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>"
+                + "@font-face{font-family:Fr;src:url('font/fraunces_bold.ttf')}"
+                + "@font-face{font-family:Jk;font-weight:400;src:url('font/jakarta_regular.ttf')}"
+                + "@font-face{font-family:Jk;font-weight:600;src:url('font/jakarta_semibold.ttf')}"
+                + "@font-face{font-family:Jk;font-weight:700;src:url('font/jakarta_bold.ttf')}"
+                + "html,body{margin:0;padding:0;background:transparent}"
+                + "body{font-family:Jk,sans-serif;font-size:15px;line-height:1.55;color:" + css(R.color.shop_ink) + ";"
+                + "-webkit-text-size-adjust:none;word-wrap:break-word}"
+                + "h1,h2,h3,h4,h5,h6{font-family:Fr,serif;font-weight:normal;color:" + css(R.color.shop_ink) + ";line-height:1.2;margin:18px 0 8px}"
+                + "h1,h2{font-size:21px}h3{font-size:18px}h4,h5,h6{font-size:16px}"
+                + "body>:first-child{margin-top:4px}"
+                + "p{margin:0 0 12px}strong,b{font-weight:700}em,i{font-style:italic}"
+                + "ul,ol{margin:0 0 12px;padding-left:20px}li{margin:0 0 7px;padding-left:2px}"
+                + "li::marker{color:" + css(R.color.shop_pink) + "}"
+                + "</style></head><body>" + bodyHtml + "</body></html>";
+        w.loadDataWithBaseURL("file:///android_res/", page, "text/html", "utf-8", null);
+    }
+
+    /** A colour resource as CSS (follows light / dark mode). */
+    private String css(int colorRes) {
+        int c = ContextCompat.getColor(this, colorRes);
+        return String.format(java.util.Locale.ROOT, "#%06X", c & 0xFFFFFF);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (b != null) b.descriptionWeb.destroy();
+        super.onDestroy();
     }
 
     // ------------------------------------------------------------------ you may also like
