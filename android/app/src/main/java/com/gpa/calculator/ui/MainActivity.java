@@ -42,8 +42,12 @@ import com.gpa.calculator.ui.home.FavouritesFragment;
 import com.gpa.calculator.ui.home.HistoryFragment;
 import com.gpa.calculator.ui.home.HomeFragment;
 import com.gpa.calculator.ui.home.SettingsFragment;
+import com.gpa.calculator.ui.shop.ShopFragment;
+import com.gpa.calculator.data.shop.ShopRepo;
 
 public class MainActivity extends BaseActivity {
+    /** Extra naming a tab to open, e.g. "shop". */
+    public static final String EXTRA_TAB = "open_tab";
     private static final int UPDATE_REQUEST = 7001;
     private ActivityMainBinding b;
     private AdsManager.BannerHandle banner;
@@ -51,7 +55,9 @@ public class MainActivity extends BaseActivity {
     /** One pop-up (admin campaign or notification prompt) per app session at most. */
     private static boolean sessionPopupShown;
     private boolean adsReady;
+    private boolean bannerHiddenForShop;
     private final ConfigStore.Listener configListener = cfg -> {
+        updateShopNav();
         loadBanner();
         if (adsReady) maybeShowPopup();
     };
@@ -72,7 +78,15 @@ public class MainActivity extends BaseActivity {
             showTab(currentTab);
             return true;
         });
-        b.bottomNav.setOnItemReselectedListener(item -> { /* no-op keeps state */ });
+        b.bottomNav.setOnItemReselectedListener(item -> {
+            // Normally a no-op (keeps the tab's state); but if a screen without its own tab is showing
+            // (the shop opened from the Home banner), tapping the selected tab returns to it.
+            if (item.getItemId() != currentTab) {
+                currentTab = item.getItemId();
+                showTab(currentTab);
+            }
+        });
+        updateShopNav();
 
         if (savedInstanceState == null) {
             showTab(R.id.nav_home);
@@ -87,7 +101,7 @@ public class MainActivity extends BaseActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
                 if (currentTab != R.id.nav_home) {
-                    b.bottomNav.setSelectedItemId(R.id.nav_home);
+                    goHome();
                 } else {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
@@ -121,7 +135,10 @@ public class MainActivity extends BaseActivity {
         if (id == R.id.nav_favourites) { f = new FavouritesFragment(); tag = "fav"; }
         else if (id == R.id.nav_history) { f = new HistoryFragment(); tag = "history"; }
         else if (id == R.id.nav_settings) { f = new SettingsFragment(); tag = "settings"; }
+        else if (id == R.id.nav_shop) { f = new ShopFragment(); tag = "shop"; }
         else { f = new HomeFragment(); tag = "home"; }
+        // Banner off on the Shop tab, back on when leaving it (callers set currentTab first).
+        if (adsReady && (id == R.id.nav_shop) != bannerHiddenForShop) loadBanner();
         f.setEnterTransition(new MaterialFadeThrough());
         f.setExitTransition(new MaterialFadeThrough());
         getSupportFragmentManager().beginTransaction()
@@ -130,8 +147,48 @@ public class MainActivity extends BaseActivity {
                 .commit();
     }
 
+    // ------------------------------------------------------------------ shop
+    /** Shop tab follows the admin panel: shown only while the shop is on and the tab is enabled. */
+    private void updateShopNav() {
+        RemoteConfig.Shop shop = ConfigStore.get(this).config().shop;
+        b.bottomNav.getMenu().findItem(R.id.nav_shop).setVisible(shop.enabled && shop.show_tab);
+        if (!shop.enabled) {
+            ShopRepo.get(this).clear();
+            if (currentTab == R.id.nav_shop) goHome();
+        }
+    }
+
+    private void goHome() {
+        if (b.bottomNav.getSelectedItemId() == R.id.nav_home) {
+            // e.g. the shop was opened from the Home banner while its tab is hidden
+            currentTab = R.id.nav_home;
+            showTab(R.id.nav_home);
+        } else {
+            b.bottomNav.setSelectedItemId(R.id.nav_home);
+        }
+    }
+
+    /** Opens the shop (from the Home banner or a link), even when its tab is hidden. */
+    public void openShopTab() {
+        RemoteConfig.Shop shop = ConfigStore.get(this).config().shop;
+        if (!shop.enabled) return;
+        if (shop.show_tab) {
+            b.bottomNav.setSelectedItemId(R.id.nav_shop);
+        } else if (currentTab != R.id.nav_shop) {
+            currentTab = R.id.nav_shop;
+            showTab(R.id.nav_shop);
+        }
+    }
+
     private void loadBanner() {
         if (banner != null) banner.destroy();
+        banner = null;
+        bannerHiddenForShop = currentTab == R.id.nav_shop;
+        if (bannerHiddenForShop) {
+            // No ad banner under our own shop (it could even advertise a competitor).
+            b.adContainer.setVisibility(android.view.View.GONE);
+            return;
+        }
         banner = AdsManager.get(this).attachBanner(this, b.adContainer, "home");
     }
 
@@ -146,6 +203,12 @@ public class MainActivity extends BaseActivity {
     /** Opens the calculator / URL named by a tapped push notification (see PushManager). */
     private void handleDeepLink(@Nullable Intent intent) {
         if (intent == null) return;
+        if ("shop".equals(intent.getStringExtra(EXTRA_TAB))) {
+            intent.removeExtra(EXTRA_TAB);
+            sessionPopupShown = true;
+            openShopTab();
+            return;
+        }
         String calcId = intent.getStringExtra(PushManager.EXTRA_OPEN_CALC);
         String url = intent.getStringExtra(PushManager.EXTRA_OPEN_URL);
         intent.removeExtra(PushManager.EXTRA_OPEN_CALC);

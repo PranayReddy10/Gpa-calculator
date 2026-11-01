@@ -16,7 +16,9 @@ final class ConfigController
         Auth::requireAppKey($r);
         $cfg = AppConfig::load();
         // Secrets the client never needs are not exposed (admin sees them via the admin endpoint).
-        unset($cfg['ads']['max']['sdk_key'], $cfg['app']['privacy_policy'], $cfg['ads']['app_ads_txt']);
+        // The app reads products from /api/v1/shop; a shop without an API key yet is shown as off.
+        if (trim($cfg['shop']['api_key']) === '') $cfg['shop']['enabled'] = false;
+        unset($cfg['ads']['max']['sdk_key'], $cfg['app']['privacy_policy'], $cfg['ads']['app_ads_txt'], $cfg['shop']['api_key']);
         if ($cfg['app']['onesignal_app_id'] === '') $cfg['app']['onesignal_app_id'] = (string)\Gpa\Db::config('ONESIGNAL_APP_ID', '');
         return Response::ok($cfg);
     }

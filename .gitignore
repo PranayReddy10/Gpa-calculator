@@ -1,6 +1,7 @@
 # backend secrets / local data
 backend/config.php
 backend/data/*.sqlite*
+backend/data/shop-cache.json*
 # android
 android/.gradle/
 android/build/

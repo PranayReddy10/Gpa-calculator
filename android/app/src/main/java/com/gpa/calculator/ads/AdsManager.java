@@ -33,6 +33,12 @@ import java.util.Map;
  * specific; see the AdProvider implementations.
  */
 public final class AdsManager implements ConfigStore.Listener {
+    /**
+     * Screens where an app-open ad must never appear, e.g. the shop checkout: coming back from the
+     * photo picker or a UPI app counts as "opening the app" and would cover the payment page.
+     */
+    public interface NoAppOpenAd {}
+
     /** Filter Logcat by this tag to follow every ad decision. */
     public static final String TAG = "GPAAds";
     private static AdsManager instance;
@@ -409,7 +415,7 @@ public final class AdsManager implements ConfigStore.Listener {
     }
 
     private void maybeShowAppOpen(@Nullable Activity activity) {
-        if (activity == null || activity instanceof SplashActivity || activity.isFinishing()) return;
+        if (activity == null || activity instanceof SplashActivity || activity instanceof NoAppOpenAd || activity.isFinishing()) return;
         RemoteConfig.Ads ads = cfg();
         long now = System.currentTimeMillis();
         if (!adsAllowed() || !ads.app_open_enabled || fullScreenShowing) return;

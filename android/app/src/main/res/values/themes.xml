@@ -110,6 +110,11 @@
     </style>
 
     <!-- Text styles -->
+    <style name="ShapeAppearance.GPA.Thumb" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">14dp</item>
+    </style>
+
     <style name="Text.GPA.Display" parent="TextAppearance.Material3.DisplaySmall">
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textColor">?attr/colorOnSurface</item>

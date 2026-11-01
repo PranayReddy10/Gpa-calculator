@@ -37,6 +37,13 @@ Never commit the keystore or its passwords.
 - Click **Load default template**, read it, adjust anything that does not match how you run the
   app, then **Save privacy policy**.
 
+**Shop tab** (optional: your MadeForU products inside the app)
+- Shop URL `https://madeforu.co.in` and the shop's API key (from the shop admin, the value it
+  checks as `?key=` / `X-Api-Key`). The key stays on this server; the app never receives it.
+- **Test connection** should report the product count. Tick **Shop enabled**, choose the bottom
+  Shop tab and/or the Home banner, then **Save shop settings**.
+- Then reload the Privacy template (it gains a Shop section) and update Data safety (section 7).
+
 **Ads tab**
 - AdMob app ID (same as `ADMOB_APP_ID` below) and your real unit IDs: banner, interstitial,
   app open, rewarded, native.
@@ -168,6 +175,21 @@ filling the form: Google Mobile Ads, AppLovin, Meta Audience Network, Unity Ads,
 
 No personal info (name, email, phone), no financial info, no photos, no contacts, no precise
 location.
+
+**If the in-app Shop is on with "Open product pages inside the app"** (admin panel > Shop), your
+shop's checkout runs inside the app, so Google counts what customers enter there. Add:
+
+| Data type | Collected | Shared | Optional | Purposes |
+|---|---|---|---|---|
+| Personal info > Name, Email address, Phone number, Address | Yes | Yes (delivery / payment partners) | Yes (only when ordering) | App functionality (order fulfilment) |
+| Photos and videos > Photos | Yes | No | Yes (only when ordering) | App functionality (printing the order) |
+| Financial info > Purchase history | Yes | No | Yes | App functionality |
+
+Payment card / UPI details are entered on the payment provider's page; check its own guidance.
+Turning "Open product pages inside the app" off sends customers to the phone's browser instead,
+and these rows are then not needed. Selling physical products this way does not need Google Play
+Billing. Load the privacy template again (admin panel > Privacy) after enabling the shop: it gains
+a Shop section.
 
 ## 8. Store listing
 

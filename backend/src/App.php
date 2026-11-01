@@ -8,6 +8,7 @@ use Gpa\Controllers\ConfigController;
 use Gpa\Controllers\DeviceController;
 use Gpa\Controllers\EventsController;
 use Gpa\Controllers\SavesController;
+use Gpa\Controllers\ShopController;
 
 /** Tiny router. Paths are relative to the backend folder, e.g. /api/v1/config. */
 final class App
@@ -53,6 +54,7 @@ final class App
         if ($p === '/api/v1/saves' && $m === 'POST') return SavesController::upsert($r);
         if ($p === '/api/v1/saves' && $m === 'DELETE') return SavesController::deleteAll($r);
         if (preg_match('#^/api/v1/saves/(\d+)$#', $p, $mm) && $m === 'DELETE') return SavesController::delete($r, $mm[1]);
+        if ($p === '/api/v1/shop' && $m === 'GET') return ShopController::catalog($r);
 
         // ---- admin endpoints
         if ($p === '/api/v1/admin/login' && $m === 'POST') return AdminController::login($r);
@@ -68,6 +70,8 @@ final class App
         if ($p === '/api/v1/admin/push/status' && $m === 'GET') return AdminController::pushStatus($r);
         if ($p === '/api/v1/admin/push' && $m === 'GET') return AdminController::pushHistory($r);
         if ($p === '/api/v1/admin/push' && $m === 'POST') return AdminController::pushSend($r);
+        if ($p === '/api/v1/admin/shop/test' && $m === 'POST') return ShopController::test($r);
+        if ($p === '/api/v1/admin/shop/refresh' && $m === 'POST') return ShopController::refresh($r);
 
         return Response::error(404, 'Not found: ' . $m . ' ' . $p);
     }

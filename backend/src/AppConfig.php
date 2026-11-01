@@ -61,6 +61,22 @@ final class AppConfig
                 'privacy_policy' => '',
                 'privacy_updated' => '',
             ],
+            // In-app shop: products come from the shop's own API through this server
+            // (GET /api/v1/shop), so the shop API key never ships inside the app.
+            'shop' => [
+                'enabled' => false,
+                'name' => 'MadeForU',
+                'title' => 'Personalised photo gifts',
+                'subtitle' => 'Mugs, magnets, keychains & more, made with your photos',
+                'base_url' => 'https://madeforu.co.in',
+                'api_key' => '',
+                'show_tab' => true,
+                'show_home_banner' => true,
+                // Product pages open inside the app (photo upload + checkout) or in the phone's browser.
+                'checkout_in_app' => true,
+                'utm' => 'utm_source=gpa_calculator&utm_medium=app&utm_campaign=shop',
+                'cache_minutes' => 30,
+            ],
             'features' => [
                 'cloud_save' => true,
                 'analytics' => true,
@@ -153,6 +169,12 @@ final class AppConfig
         }
         if ($p['enabled'] && $p['id'] === '') throw new HttpException(422, 'Give the pop-up an id (change it to show the pop-up again)');
         if ($p['primary_action'] === 'url' && $p['enabled'] && !preg_match('#^https?://#', $p['primary_value'])) throw new HttpException(422, 'Pop-up button URL must start with http:// or https://');
+        $shop = $cfg['shop'];
+        if (!preg_match('#^https://[a-z0-9.-]+(:\d+)?/?$#i', $shop['base_url'])) throw new HttpException(422, 'Shop URL must be the https address of the shop, e.g. https://madeforu.co.in');
+        if (strlen($shop['api_key']) > 300) throw new HttpException(422, 'Shop API key is too long');
+        if ($shop['cache_minutes'] < 1 || $shop['cache_minutes'] > 1440) throw new HttpException(422, 'Shop cache must be between 1 and 1440 minutes');
+        if ($shop['utm'] !== '' && !preg_match('/^[A-Za-z0-9_.~=&%+-]+$/', $shop['utm'])) throw new HttpException(422, 'Shop tracking tags must look like utm_source=gpa_calculator&utm_medium=app');
+        if ($shop['enabled'] && $shop['name'] === '') throw new HttpException(422, 'Give the shop a name');
         $os = $cfg['app']['onesignal_app_id'];
         if ($os !== '' && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $os)) throw new HttpException(422, 'OneSignal app ID must look like xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx');
         foreach (['interstitial_min_interval_sec', 'app_open_min_interval_sec', 'first_interstitial_delay_sec', 'reward_ad_free_minutes', 'rate_prompt_after_calcs'] as $k) {
