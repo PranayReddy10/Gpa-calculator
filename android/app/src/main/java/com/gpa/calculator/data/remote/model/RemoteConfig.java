@@ -12,6 +12,7 @@ public class RemoteConfig {
     public Ads ads = new Ads();
     public App app = new App();
     public Features features = new Features();
+    public Shop shop = new Shop();
     public long fetched_at;
 
     public static class Ads {
@@ -127,5 +128,16 @@ public class RemoteConfig {
         public boolean in_app_messages = true;
         /** Exchange-rate feed (Frankfurter/ECB format: {"base","rates":{...}}); "?from=USD" is appended. */
         public String currency_api_url = "https://api.frankfurter.app/latest";
+    }
+    /** In-app shop (products come from GET /api/v1/shop). Off until the admin enables it. */
+    public static class Shop {
+        public boolean enabled = false;
+        public String name = "MadeForU";
+        public String title = "Personalised photo gifts";
+        public String subtitle = "";
+        public String base_url = "";
+        public boolean show_tab = true;
+        public boolean show_home_banner = true;
+        public boolean checkout_in_app = true;
     }
 }

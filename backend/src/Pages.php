@@ -176,6 +176,22 @@ CSS;
         $email = trim($cfg['app']['contact_email']);
         $contact = $email !== '' ? '[' . $email . '](mailto:' . $email . ')' : 'the contact email shown on our Google Play listing';
         $days = (int)Db::config('EVENT_RETENTION_DAYS', 90);
+        $shopSection = '';
+        if (!empty($cfg['shop']['enabled'])) {
+            $shopName = trim((string)$cfg['shop']['name']) !== '' ? trim((string)$cfg['shop']['name']) : 'our partner shop';
+            $shopHost = (string)(parse_url((string)$cfg['shop']['base_url'], PHP_URL_HOST) ?: $cfg['shop']['base_url']);
+            $shopSection = <<<SHOP
+### Shop
+
+The app's **Shop** shows products from {$shopName} ({$shopHost}). The product list comes from our server; product photos load from the shop's image server, which sees your IP address like any website.
+
+When you tap **Personalise & buy**, {$shopName}'s own web pages open inside the app. The photos you upload, the text you add, your delivery and contact details and your order go directly to {$shopName} and are handled under its own privacy policy, published on its website. Payments are processed by the payment provider shown at checkout. The app does not read or keep these details; the web pages keep their own cookies on your phone so your cart and login work.
+
+We count shop visits (shop opened, product viewed, "Personalise & buy" tapped) in the usage statistics described above.
+
+
+SHOP;
+        }
         return <<<MD
 # Privacy Policy
 
@@ -218,7 +234,7 @@ Ads are provided by Google AdMob and the ad networks it works with for this app 
 
 Where the law requires consent (for example in the EEA and the UK), the app asks for it using Google's consent tool, and you can change your choice at any time in **Settings > Privacy options**. You can reset or delete your advertising ID in your phone's settings (**Settings > Privacy > Ads**).
 
-### Notifications
+{$shopSection}### Notifications
 
 If you allow notifications, OneSignal provides the push service. It receives a push token, basic device information and the app's installation ID so that notifications reach your device. You can turn notifications off in **Settings > Notifications** or in your phone's settings. OneSignal's policy: https://onesignal.com/privacy_policy
 

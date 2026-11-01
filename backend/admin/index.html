@@ -54,6 +54,7 @@
   <a data-tab="ads">Ads</a>
   <a data-tab="appcfg">App</a>
   <a data-tab="privacy">Privacy</a>
+  <a data-tab="shop">Shop</a>
   <a data-tab="push">Notifications</a>
   <a data-tab="devices">Devices</a>
   <a data-tab="events">Events</a>
@@ -244,6 +245,42 @@
     </div>
   </div>
 
+  <!-- ------------------------------------------------ Shop -->
+  <div id="tab-shop" class="hidden">
+    <div class="card">
+      <h2>In-app shop</h2>
+      <div id="shopMsg" class="msg"></div>
+      <p><small>Shows your shop's products inside the app (a Shop tab and a banner on Home). Products are read from
+      <code>{shop URL}/api/v1/products</code> by this server with the API key below; the key is never sent to the app.
+      Customers personalise (upload photos) and check out on your product pages, opened inside the app.</small></p>
+      <div class="chk"><input type="checkbox" id="shop.enabled"><label for="shop.enabled" style="margin:0">Shop enabled</label></div>
+      <div class="row">
+        <div><label>Shop URL</label><input type="text" id="shop.base_url" placeholder="https://madeforu.co.in"></div>
+        <div><label>Shop API key (sent as X-Api-Key)</label><input type="password" id="shop.api_key" autocomplete="off" placeholder="paste the key from your shop admin"></div>
+      </div>
+      <div class="row">
+        <div><label>Shop name</label><input type="text" id="shop.name"></div>
+        <div><label>Title</label><input type="text" id="shop.title"></div>
+      </div>
+      <label>Subtitle</label><input type="text" id="shop.subtitle">
+      <div class="row">
+        <div><div class="chk"><input type="checkbox" id="shop.show_tab"><label for="shop.show_tab" style="margin:0">Shop tab in the bottom bar</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="shop.show_home_banner"><label for="shop.show_home_banner" style="margin:0">Banner on the Home screen</label></div></div>
+        <div><div class="chk"><input type="checkbox" id="shop.checkout_in_app"><label for="shop.checkout_in_app" style="margin:0">Open product pages inside the app (off = phone's browser)</label></div></div>
+      </div>
+      <div class="row">
+        <div><label>Tracking tags added to product links</label><input type="text" id="shop.utm"></div>
+        <div><label>Refresh products every (minutes)</label><input type="number" id="shop.cache_minutes" min="1" max="1440"></div>
+      </div>
+      <p>
+        <button class="primary" id="saveShop">Save shop settings</button>
+        <button class="ghost" id="testShop">Test connection</button>
+        <button class="ghost" id="refreshShop">Reload products now</button>
+      </p>
+      <small>Shop events (opens, product views, "Personalise &amp; buy" taps) appear in the Events tab as <code>shop_open</code>, <code>shop_product</code> and <code>shop_buy</code>.</small>
+    </div>
+  </div>
+
   <!-- ------------------------------------------------ Notifications -->
   <div id="tab-push" class="hidden">
     <div class="card">
@@ -341,9 +378,9 @@
   document.querySelectorAll('nav a').forEach(a => a.onclick = () => showTab(a.dataset.tab));
   function showTab(t){
     document.querySelectorAll('nav a').forEach(a => a.classList.toggle('active', a.dataset.tab === t));
-    ['dash','ads','appcfg','privacy','push','devices','events','account'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
+    ['dash','ads','appcfg','privacy','shop','push','devices','events','account'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
     if (t === 'dash') loadStats();
-    if (t === 'ads' || t === 'appcfg' || t === 'privacy') loadConfig();
+    if (t === 'ads' || t === 'appcfg' || t === 'privacy' || t === 'shop') loadConfig();
     if (t === 'devices') loadDevices();
     if (t === 'events') loadEvents();
     if (t === 'push') loadPush();
@@ -380,7 +417,7 @@
   function get(obj, path){ return path.split('.').reduce((o,k) => (o == null ? undefined : o[k]), obj); }
   function set(obj, path, v){ const ks = path.split('.'); let o = obj; ks.slice(0,-1).forEach(k => { if (!o[k]) o[k] = {}; o = o[k]; }); o[ks[ks.length-1]] = v; }
   function fillForm(){
-    document.querySelectorAll('#tab-ads [id*="."], #tab-appcfg [id*="."], #tab-privacy [id*="."]').forEach(el => {
+    document.querySelectorAll('#tab-ads [id*="."], #tab-appcfg [id*="."], #tab-privacy [id*="."], #tab-shop [id*="."]').forEach(el => {
       const v = get(config, el.id);
       if (el.type === 'checkbox') el.checked = !!v;
       else if (Array.isArray(v)) el.value = v.join(', ');
@@ -420,6 +457,26 @@
   };
   $('previewPrivacy').onclick = () => window.open(SITE + '/privacy', '_blank', 'noopener');
   function showPrivacyMeta(){ $('privacyUpdated').textContent = (config && config.app.privacy_updated) || 'not yet (default policy in use)'; }
+
+  // ---- shop
+  $('saveShop').onclick = async () => {
+    try { config = await api('PUT', '/admin/config', readForm('shop')); fillForm(); msg('shopMsg', 'Saved. Apps show the change on next launch.', true); }
+    catch(e){ msg('shopMsg', e.message, false); }
+  };
+  $('testShop').onclick = async () => {
+    msg('shopMsg', 'Contacting the shop…', true);
+    try {
+      const d = await api('POST', '/admin/shop/test', {base_url: $('shop.base_url').value, api_key: $('shop.api_key').value});
+      msg('shopMsg', 'Connected: ' + d.products + ' products' + (d.sample ? ' (e.g. "' + d.sample + '")' : '') + '. Save to use these settings.', true);
+    } catch(e){ msg('shopMsg', e.message, false); }
+  };
+  $('refreshShop').onclick = async () => {
+    msg('shopMsg', 'Loading products…', true);
+    try {
+      const d = await api('POST', '/admin/shop/refresh');
+      msg('shopMsg', 'Loaded ' + d.products + ' products in ' + d.categories + ' categories' + (d.stale ? ' (shop unreachable, showing the last saved copy)' : '') + '.', !d.stale);
+    } catch(e){ msg('shopMsg', e.message, false); }
+  };
 
   // ---- push notifications
   $('pOpen').onchange = () => { $('pCalcWrap').classList.toggle('hidden', $('pOpen').value !== 'calc'); $('pUrlWrap').classList.toggle('hidden', $('pOpen').value !== 'url'); };

@@ -12,6 +12,7 @@ use Gpa\AppConfig;
 use Gpa\Auth;
 use Gpa\Db;
 use Gpa\Request;
+use Gpa\Controllers\ShopController;
 
 $dbFile = sys_get_temp_dir() . '/gpa_smoke_' . getmypid() . '.sqlite';
 @unlink($dbFile);
@@ -280,6 +281,87 @@ $cfg['app']['publisher_name'] = '';
 call('PUT', '/api/v1/admin/config', $cfg, $ADM);
 [$s, $p] = call('GET', '/api/v1');
 check('API status JSON at /api/v1', $s === 200 && ($p['data']['name'] ?? '') === 'GPA Calculator API');
+// ---- in-app shop (fake shop API, no network)
+ShopController::$cacheFile = sys_get_temp_dir() . '/gpa_shop_cache_' . getmypid() . '.json';
+@unlink(ShopController::$cacheFile);
+$shopCalls = 0; $shopDown = false; $shopKeySeen = '';
+ShopController::$fetcher = function (string $url, string $key) use (&$shopCalls, &$shopDown, &$shopKeySeen): array {
+    $shopCalls++; $shopKeySeen = $key;
+    if ($shopDown) return [0, 'connection refused'];
+    if ($key !== 'shop-secret-key-123') return [401, '{"error":"Missing or wrong API key."}'];
+    if (strpos($url, '/api/v1/categories') !== false) {
+        return [200, json_encode(['data' => [
+            ['id' => 1, 'name' => 'Magnets', 'slug' => 'magnets', 'parent_id' => null, 'image' => 'https://shop.test/m.png'],
+            ['id' => 2, 'name' => 'Square magnets', 'slug' => 'square-magnets', 'parent_id' => 1],
+            ['id' => 3, 'name' => 'Raw Materials', 'slug' => 'raw-materials', 'parent_id' => null],
+        ]])];
+    }
+    if (strpos($url, '/api/v1/products') !== false) {
+        $page = preg_match('/[?&]page=(\d+)/', $url, $m) ? (int)$m[1] : 1;
+        $mk = fn($id, $name) => ['id' => $id, 'name' => $name, 'slug' => 'p' . $id, 'url' => "https://shop.test/product/p$id/", 'type' => 'simple',
+            'price' => 99, 'regular_price' => 120, 'max_price' => 99, 'on_sale' => true, 'discount_percent' => 18, 'currency' => 'INR', 'in_stock' => true,
+            'short_description' => '<p>Set of 2 &#215; magnets</p>', 'description_text' => "Line one.\n\n\n\nLine two.",
+            'image' => 'https://shop.test/a.png', 'images' => [['url' => 'https://shop.test/a.png'], ['url' => 'javascript:alert(1)'], ['url' => 'https://shop.test/b.png']],
+            'categories' => [['slug' => 'square-magnets']], 'variants' => [], 'attributes' => ['Pack' => ['Pack-1', 'Pack-2']],
+            'personalisation' => [['label' => 'Upload your photo', 'type' => 'images', 'required' => true, 'max_files' => 2]],
+            'production_days' => 3, 'seo' => ['title' => 'drop me']];
+        $data = $page === 1 ? [$mk(1, 'Square magnet'), $mk(2, 'Mug')] : [$mk(3, 'Keychain')];
+        return [200, json_encode(['data' => $data, 'meta' => ['page' => $page, 'last_page' => 2, 'total' => 3]])];
+    }
+    return [404, '{}'];
+};
+[$s, $p] = call('GET', '/api/v1/shop', [], $APP);
+check('shop off by default', $s === 404);
+$cfg = call('GET', '/api/v1/admin/config', [], $ADM)[1]['data'];
+$cfg['shop']['enabled'] = true;
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+[$s, $p] = call('GET', '/api/v1/config', [], $APP);
+check('shop hidden from app until a key is set', $s === 200 && $p['data']['shop']['enabled'] === false && !array_key_exists('api_key', $p['data']['shop']));
+$bad = $cfg; $bad['shop']['base_url'] = 'http://shop.test';
+check('shop URL must be https', call('PUT', '/api/v1/admin/config', $bad, $ADM)[0] === 422);
+[$s, $p] = call('POST', '/api/v1/admin/shop/test', ['base_url' => 'https://shop.test', 'api_key' => 'wrong'], $ADM);
+check('shop test reports a wrong key', $s === 422 && strpos($p['error'], 'rejected the API key') !== false, $p);
+[$s, $p] = call('POST', '/api/v1/admin/shop/test', ['base_url' => 'https://shop.test', 'api_key' => 'shop-secret-key-123'], $ADM);
+check('shop test ok', $s === 200 && $p['data']['products'] === 3 && $p['data']['sample'] === 'Square magnet', $p);
+check('shop test needs admin', call('POST', '/api/v1/admin/shop/test', [], $APP)[0] === 401);
+$cfg['shop']['base_url'] = 'https://shop.test';
+$cfg['shop']['api_key'] = 'shop-secret-key-123';
+[$s, $p] = call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+check('shop settings saved', $s === 200 && $p['data']['shop']['api_key'] === 'shop-secret-key-123');
+[$s, $p] = call('GET', '/api/v1/config', [], $APP);
+check('app config: shop on, key never sent', $p['data']['shop']['enabled'] === true && !array_key_exists('api_key', $p['data']['shop'])
+    && strpos(json_encode($p), 'shop-secret-key-123') === false);
+check('shop needs app key', call('GET', '/api/v1/shop')[0] === 401);
+$tpl = call('GET', '/api/v1/admin/privacy/template', [], $ADM)[1]['data']['markdown'] ?? '';
+check('privacy template gains a Shop section', strpos($tpl, '### Shop') !== false && strpos($tpl, 'MadeForU (shop.test)') !== false);
+$shopCalls = 0;
+[$s, $p] = call('GET', '/api/v1/shop', [], $APP);
+$d = $p['data'] ?? [];
+check('shop catalogue: all pages', $s === 200 && count($d['products'] ?? []) === 3 && $shopCalls === 3, [$s, $shopCalls, $p['error'] ?? null]);
+check('shop key sent to the shop API', $shopKeySeen === 'shop-secret-key-123');
+check('shop catalogue never contains the key', strpos(json_encode($p), 'shop-secret-key-123') === false);
+$p1 = $d['products'][0] ?? [];
+check('shop product trimmed', !isset($p1['seo']) && $p1['short'] === 'Set of 2 × magnets' && $p1['description'] === "Line one.\n\nLine two.", $p1);
+check('shop product links tagged', ($p1['url'] ?? '') === 'https://shop.test/product/p1/?utm_source=gpa_calculator&utm_medium=app&utm_campaign=shop');
+check('shop images: only http(s)', ($p1['images'] ?? []) === ['https://shop.test/a.png', 'https://shop.test/b.png'], $p1['images'] ?? null);
+check('shop product in parent category too', ($p1['category_slugs'] ?? []) === ['square-magnets', 'magnets'], $p1['category_slugs'] ?? null);
+$catSlugs = array_column($d['categories'] ?? [], 'count', 'slug');
+check('shop categories: parent rolled up, empty hidden', $catSlugs === ['magnets' => 3, 'square-magnets' => 3], $catSlugs);
+$shopCalls = 0;
+call('GET', '/api/v1/shop', [], $APP);
+check('shop catalogue cached', $shopCalls === 0);
+$shopDown = true;
+[$s, $p] = call('POST', '/api/v1/admin/shop/refresh', [], $ADM);
+check('shop down: last copy kept', $s === 200 && $p['data']['stale'] === true && $p['data']['products'] === 3, $p);
+$shopDown = false;
+[$s, $p] = call('POST', '/api/v1/admin/shop/refresh', [], $ADM);
+check('shop refresh', $s === 200 && $p['data']['stale'] === false && $p['data']['categories'] === 2, $p);
+$cfg['shop']['enabled'] = false;
+call('PUT', '/api/v1/admin/config', $cfg, $ADM);
+check('shop turned off again', call('GET', '/api/v1/shop', [], $APP)[0] === 404);
+$tpl = call('GET', '/api/v1/admin/privacy/template', [], $ADM)[1]['data']['markdown'] ?? '';
+check('no Shop section while the shop is off', strpos($tpl, '### Shop') === false && strpos($tpl, '### Notifications') !== false);
+@unlink(ShopController::$cacheFile);
 [$s, $p] = call('GET', '/api/v1/nope');
 check('404', $s === 404);
 

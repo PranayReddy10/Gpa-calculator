@@ -24,6 +24,17 @@ import com.gpa.calculator.databinding.FragmentHomeBinding;
 import com.gpa.calculator.ui.calc.CalcLauncher;
 import com.gpa.calculator.ui.common.Icons;
 
+import android.widget.ImageView;
+
+import com.gpa.calculator.data.remote.Analytics;
+import com.gpa.calculator.data.remote.ConfigStore;
+import com.gpa.calculator.data.remote.model.RemoteConfig;
+import com.gpa.calculator.data.remote.model.ShopCatalog;
+import com.gpa.calculator.data.shop.ShopQuery;
+import com.gpa.calculator.data.shop.ShopRepo;
+import com.gpa.calculator.ui.MainActivity;
+import com.gpa.calculator.ui.common.ImageLoader;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -50,6 +61,8 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         b.greeting.setText(HomeSections.greeting(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) + " 👋");
         updateSubtitle();
+        bindShopBanner();
+        ConfigStore.get(requireContext()).addListener(shopConfigListener);
 
         adapter = new HomeAdapter(new HomeAdapter.Listener() {
             @Override public void onOpen(Calculator calc, View sharedView, String inputsJson) {
@@ -160,8 +173,42 @@ public class HomeFragment extends Fragment {
         b.empty.setVisibility(noResults ? View.VISIBLE : View.GONE);
     }
 
+    // ------------------------------------------------------------------ shop banner
+    private final ConfigStore.Listener shopConfigListener = cfg -> bindShopBanner();
+
+    /** Banner for the in-app shop, with two product photos; hidden when the shop is off. */
+    private void bindShopBanner() {
+        if (b == null) return;
+        RemoteConfig.Shop shop = ConfigStore.get(requireContext()).config().shop;
+        boolean show = shop.enabled && shop.show_home_banner;
+        b.shopBanner.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (!show) return;
+        b.shopBannerName.setText(shop.name);
+        b.shopBannerTitle.setText(shop.title);
+        b.shopBanner.setOnClickListener(v -> {
+            Analytics.get(requireContext()).log("shop_open", "source", "home_banner");
+            if (requireActivity() instanceof MainActivity) ((MainActivity) requireActivity()).openShopTab();
+        });
+        ShopRepo.get(requireContext()).load(false, new ShopRepo.Callback() {
+            @Override public void onCatalog(ShopCatalog c, boolean fromNetwork) {
+                if (b == null) return;
+                List<ShopCatalog.Product> picks = ShopQuery.sort(c.products, ShopQuery.Sort.FEATURED);
+                ImageView[] thumbs = {b.shopThumb1, b.shopThumb2};
+                int px = Math.round(60 * getResources().getDisplayMetrics().density);
+                for (int i = 0; i < thumbs.length; i++) {
+                    boolean has = i < picks.size();
+                    thumbs[i].setVisibility(has ? View.VISIBLE : View.GONE);
+                    if (has) ImageLoader.get(requireContext()).load(thumbs[i], picks.get(i).thumbnail.isEmpty() ? picks.get(i).image : picks.get(i).thumbnail, px);
+                }
+            }
+
+            @Override public void onError(String message) { /* banner still works without photos */ }
+        });
+    }
+
     @Override
     public void onDestroyView() {
+        ConfigStore.get(requireContext()).removeListener(shopConfigListener);
         super.onDestroyView();
         b = null;
     }

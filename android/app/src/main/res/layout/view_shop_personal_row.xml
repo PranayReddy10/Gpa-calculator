@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="top"
+    android:orientation="horizontal"
+    android:paddingTop="12dp">
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/bg_icon_circle"
+        android:contentDescription="@null"
+        android:padding="9dp"
+        android:src="@drawable/ic_add_photo"
+        app:tint="?attr/colorPrimary" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="15sp"
+                tools:text="Upload your photo" />
+
+            <TextView
+                android:id="@+id/required"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_pill"
+                android:paddingStart="8dp"
+                android:paddingTop="1dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="1dp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="11sp"
+                tools:text="Required" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            tools:text="Upload up to 2 photos" />
+
+        <TextView
+            android:id="@+id/help"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="12sp"
+            tools:text="Clear, well-lit photos print best. JPG, PNG or HEIC, up to 15 MB each." />
+    </LinearLayout>
+</LinearLayout>
